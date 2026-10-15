@@ -2,7 +2,7 @@ import {
   SHEET, CATEGORIAS, SKILLS, ICONE_EXTRAS, COLECOES_EXTRAS, TOTAL_NOZES,
   concluidos, totalDe, fracao, nivelFazendeiro, coracoesNecessarios, contarColecao, itemPorNome, iconeUrl,
 } from '../data.js';
-import { t, termo, getIdioma } from '../i18n.js';
+import { t, termo } from '../i18n.js';
 import { icone } from '../icons.js';
 import { esc, htmlIcone, barraBlocos } from './util.js';
 
@@ -61,7 +61,7 @@ function corpoColecao(col, s, semCheck = false) {
     if (f.secao && it.secao !== f.secao) return false;
     if (!semCheck && f.status === 'faltando' && marcados[it.id]) return false;
     if (!semCheck && f.status === 'feitos' && !marcados[it.id]) return false;
-    if (busca && !it.nome.toLowerCase().includes(busca)) return false;
+    if (busca && !it.nome.toLowerCase().includes(busca) && !termo(it.nome).toLowerCase().includes(busca)) return false;
     return true;
   });
   const sel = itens.find((i) => i.id === f.sel);
@@ -87,7 +87,7 @@ function corpoColecao(col, s, semCheck = false) {
     grade = `<div class="grade">${visiveis.map((it) => {
       const ok = semCheck || marcados[it.id];
       return `<button class="slot-item${ok ? ' feito' : ''}${f.sel === it.id ? ' selecionado' : ''}" data-acao="item" data-id="${it.id}"
-        data-foco="it-${it.id}" data-dica="${esc(it.nome)}" aria-label="${esc(it.nome)}${semCheck ? '' : `: ${ok ? t('det.feito') : t('det.faltando')}`}">
+        data-foco="it-${it.id}" data-dica="${esc(termo(it.nome))}" aria-label="${esc(termo(it.nome))}${semCheck ? '' : `: ${ok ? t('det.feito') : t('det.faltando')}`}">
         <img src="${iconeUrl(it.icone)}" alt="" loading="lazy" draggable="false">${!semCheck && ok ? '<span class="visto" aria-hidden="true"></span>' : ''}</button>`;
     }).join('')}</div>`;
   }
@@ -112,10 +112,10 @@ function detalheItem(col, it, marcados, semCheck) {
     <div class="detalhe${ok ? ' feito' : ''}">
       <div class="detalhe-icone"><img src="${iconeUrl(it.icone)}" alt=""></div>
       <div class="detalhe-texto">
-        <h3>${esc(it.nome)}</h3>
+        <h3>${esc(termo(it.nome))}</h3>
         ${it.secao ? `<p class="detalhe-secao">${esc(termo(it.secao))}</p>` : ''}
         ${linhas ? `<dl>${linhas}</dl>` : ''}
-        ${it.nota ? `<details><summary>${t('det.notas')}</summary><p class="nota">${esc(it.nota)}</p></details>` : ''}
+        ${it.nota ? `<details><summary>${t('det.notas')}</summary><p class="nota">${esc(termo(it.nota))}</p></details>` : ''}
       </div>
       ${semCheck ? '' : `<button class="botao ${ok ? 'secundario' : 'primario'}" data-acao="alternar" data-id="${it.id}" data-foco="alternar">
         ${ok ? t('det.desmarcar') : t('det.marcar')}</button>`}
@@ -125,7 +125,7 @@ function detalheItem(col, it, marcados, semCheck) {
 // ---------- Listas simples ----------
 const nomeTraduzido = (chave, padrao) => {
   const v = t(chave);
-  return v === chave ? padrao : v;
+  return v === chave ? termo(padrao) : v;
 };
 
 function corpoLista(cat, s) {
@@ -147,13 +147,12 @@ function corpoRelogio(s) {
 }
 
 function corpoMetas(s) {
-  const pt = getIdioma() === 'pt';
   return `<ul class="lista">${SHEET.metasMonstros.map((m) => {
     const v = s.monstros[m.id] || 0;
     const ok = v >= m.meta;
     return `<li class="linha${ok ? ' feito' : ''}">
       <span class="linha-texto"><strong>${esc(nomeTraduzido(`nome.${m.id}`, m.nome))}</strong>
-        <small>${t('monstros.recompensa')}: ${esc(m.recompensa)}${!pt && m.descricao ? ` (${esc(m.descricao)})` : ''}</small>
+        <small>${t('monstros.recompensa')}: ${esc(termo(m.recompensa))}${m.descricao ? ` (${esc(termo(m.descricao))})` : ''}</small>
         ${barraBlocos(v / m.meta, 10, 'mini')}</span>
       <label class="meta-campo">
         <input type="number" inputmode="numeric" min="0" value="${v}" data-acao="monstro" data-id="${m.id}" data-foco="mo-${m.id}" aria-label="${esc(m.nome)}">
@@ -179,8 +178,8 @@ function presentes(lista) {
   return (lista || []).map((nome) => {
     const it = itemPorNome(nome);
     return it
-      ? `<img class="presente" src="${iconeUrl(it.icone)}" alt="${esc(nome)}" data-dica="${esc(nome)}" loading="lazy">`
-      : `<span class="presente-texto">${esc(nome)}</span>`;
+      ? `<img class="presente" src="${iconeUrl(it.icone)}" alt="${esc(termo(nome))}" data-dica="${esc(termo(nome))}" loading="lazy">`
+      : `<span class="presente-texto">${esc(termo(nome))}</span>`;
   }).join('');
 }
 
@@ -231,7 +230,7 @@ function corpoNozes(s) {
       return `<h3 class="subtitulo">${esc(termo(sec))} <small>${feitos}/${total}</small></h3>
         <ul class="lista">${visiveis.map((n) => `<li><label class="linha${s.nozes[n.id] ? ' feito' : ''}">
           <input type="checkbox" class="caixa" data-acao="marcar" data-chave="nozes" data-id="${n.id}" data-foco="nz-${n.id}" ${s.nozes[n.id] ? 'checked' : ''}>
-          <span class="linha-texto"><strong>${esc(termo(n.tipo))} <span class="pontos">×${n.pontos}</span></strong>${n.como ? `<small>${esc(n.como)}</small>` : ''}</span>
+          <span class="linha-texto"><strong>${esc(termo(n.tipo))} <span class="pontos">×${n.pontos}</span></strong>${n.como ? `<small>${esc(termo(n.como))}</small>` : ''}</span>
         </label></li>`).join('')}</ul>`;
     }).join('')}`;
 }

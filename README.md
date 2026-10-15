@@ -1,4 +1,4 @@
-# Vale Perfeito
+# Perfect Valley (Vale Perfeito)
 
 Rastreador de Perfeição para Stardew Valley 1.6. Uma fazenda 3D em pixel art que reflete o seu progresso, com os itens e ícones da planilha *Stardew Valley Completionist Checklist (Vanilla)*.
 
@@ -23,7 +23,7 @@ Abra http://localhost:5173. Sem configurar nada, dá para usar com **Continuar s
 - **Coleções com ícones**: envios, culinária, criação e peixes em grade de inventário, com filtros, busca, seções e detalhes de cada item. Em **Mais coleções** ficam museu, armas e equipamentos, alfaiataria, itens especiais e livros, espantalhos raros e o bestiário.
 - **Aldeões** com retrato, aniversário, corações e presentes favoritos (com ícone quando o item existe na planilha).
 - **Nozes douradas** item a item (130 no total).
-- **Idioma**: inglês por padrão, português em Configurações. Os nomes de itens e as dicas vindas da planilha continuam em inglês.
+- **Idioma**: inglês por padrão (Perfect Valley), português em Configurações (Vale Perfeito). Em português tudo é traduzido, inclusive itens, peixes, detalhes e notas da planilha; só os nomes dos aldeões ficam como no jogo.
 - **Importar da planilha**: em Configurações, **Importar marcações da planilha** copia tudo que estava marcado na sua planilha.
 - **Teclado**: 1–9, 0, - e = abrem as categorias; Esc fecha.
 
@@ -39,7 +39,7 @@ Ao entrar, vale o save mais recente: se a conta tiver algo mais novo que o naveg
 
 ## Atualizar os dados da planilha
 
-Os itens, as seções e os ícones vêm de `src/data/sheet.json` e `public/icons/`. Se a planilha mudar, gere de novo:
+Os itens, as seções e os ícones vêm de `src/data/sheet.json` e `public/icons/`. A tradução para português fica em `src/data/pt.json` (texto em inglês → português) e só é baixada quando o idioma é português; um texto novo que não esteja lá aparece em inglês. Se a planilha mudar, gere de novo:
 
 ```bash
 pip install openpyxl
@@ -52,6 +52,7 @@ python tools/extract_sheet.py caminho/da/planilha.xlsx
 src/
   data.js          regras e pesos da Perfeição, cálculo e importação da planilha
   data/sheet.json  itens, aldeões, metas e nozes extraídos da planilha
+  data/pt.json     tradução dos textos da planilha para português
   store.js         progresso (navegador + nuvem) e preferências do dispositivo
   i18n.js          textos em inglês e português
   firebase.js      Google, e-mail/senha e Firestore

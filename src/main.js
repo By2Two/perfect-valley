@@ -1,5 +1,5 @@
 import './style.css';
-import { setIdioma } from './i18n.js';
+import { setIdioma, aoCarregarTraducao } from './i18n.js';
 import { getState, subscribe, replaceState, setCloudSaver, getConfig, onConfig } from './store.js';
 import { criarCena } from './world/scene.js';
 import { criarApp } from './ui/app.js';
@@ -35,6 +35,11 @@ onConfig((c) => {
   modais.rerender();
 });
 aplicarConfig(getConfig());
+// Os textos da planilha em português chegam depois: redesenha quando estiverem prontos
+aoCarregarTraducao(() => {
+  app.remontar();
+  modais.rerender();
+});
 
 subscribe((s) => {
   cena.atualizar(s);

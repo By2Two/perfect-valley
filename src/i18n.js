@@ -4,7 +4,7 @@
 
 const DIC = {
   en: {
-    'app.nome': 'Vale Perfeito',
+    'app.nome': 'Perfect Valley',
     'app.sub': 'Track every step to 100% Perfection in Stardew Valley.',
     'hud.perfeicao': 'Perfection',
     'hud.local': 'Saved on this device',
@@ -86,7 +86,7 @@ const DIC = {
     'toast.objetivo': 'Goal complete!',
     'toast.categoria': '{cat} is done!',
 
-    'boas.titulo': 'Vale Perfeito',
+    'boas.titulo': 'Perfect Valley',
     'boas.google': 'Continue with Google',
     'boas.criar': 'Create account',
     'boas.entrar': 'Sign in with email',
@@ -138,7 +138,7 @@ const DIC = {
     'msg.importado': 'Spreadsheet progress imported.',
     'msg.restaurado': 'Backup restored.',
     'msg.apagado': 'Progress erased.',
-    'msg.backupInvalido': "That file isn't a Vale Perfeito backup.",
+    'msg.backupInvalido': "That file isn't a Perfect Valley backup.",
     'msg.saiu': 'Signed out. Your progress is still on this device.',
 
     'como.earth-obelisk': 'Wizard: 500,000g, 10 Iridium Bars, 10 Earth Crystals',
@@ -328,11 +328,28 @@ const GLOSSARIO = {
 };
 const PALAVRAS = { Spring: 'Primavera', Summer: 'Verão', Fall: 'Outono', Winter: 'Inverno', Also: 'Também', Rainy: 'Chuva', Sunny: 'Sol' };
 
+// Tradução dos textos da planilha (itens, detalhes, notas). Só é baixada quando o português é escolhido.
+let PT = null;
+let carregandoPT = null;
+const ouvintesTraducao = new Set();
+/** Avisa quando a tradução terminar de carregar (para redesenhar a interface). */
+export function aoCarregarTraducao(fn) {
+  ouvintesTraducao.add(fn);
+}
+function carregarTraducao() {
+  carregandoPT ??= import('./data/pt.json').then((m) => {
+    PT = m.default;
+    ouvintesTraducao.forEach((fn) => fn());
+  });
+  return carregandoPT;
+}
+
 let idioma = 'en';
 export function setIdioma(l) {
   idioma = l === 'pt' ? 'pt' : 'en';
   document.documentElement.lang = idioma === 'pt' ? 'pt-BR' : 'en';
   document.title = t('app.nome');
+  if (idioma === 'pt' && !PT) carregarTraducao();
 }
 export const getIdioma = () => idioma;
 
@@ -345,7 +362,10 @@ export function t(chave, vars) {
 /** Traduz termos da planilha (seções, rótulos, valores curtos) quando o idioma é português. */
 export function termo(txt) {
   if (idioma !== 'pt' || !txt) return txt;
+  if (PT?.[txt]) return PT[txt];
   if (GLOSSARIO[txt]) return GLOSSARIO[txt];
+  const data = txt.match(/^(Spring|Summer|Fall|Winter) (\d+)$/);
+  if (data) return `${data[2]} de ${PALAVRAS[data[1]].toLowerCase()}`;
   if (txt.includes(' · ')) return txt.split(' · ').map(termo).join(' · ');
   return txt.replace(/\b(Spring|Summer|Fall|Winter|Also|Rainy|Sunny)\b/g, (p) => PALAVRAS[p]);
 }
