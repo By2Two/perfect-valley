@@ -1,0 +1,548 @@
+/* Vale Perfeito: menus de madeira e pergaminho sobre a fazenda.
+   Tudo em múltiplos de 4px, sombras duras e cantos chanfrados. */
+:root {
+  --madeira-escura: #5b3a1e;
+  --madeira: #8a5a2b;
+  --madeira-clara: #c68b4e;
+  --pergaminho: #f3ddb0;
+  --pergaminho-2: #e8c98d;
+  --tinta: #3b2410;
+  --tinta-suave: #6e4a28;
+  --verde: #6daa2c;
+  --verde-escuro: #4f8020;
+  --ouro: #f2c230;
+  --vermelho: #d8343b;
+  --ceu: #7ec8e3;
+  --sombra: 0 4px 0 rgba(59, 36, 16, 0.45);
+  --titulo: 'Pixelify Sans', 'Courier New', monospace;
+  --texto: 'VT323', 'Courier New', monospace;
+  --ceu-topo: #7ec8e3;
+  --ceu-base: #d4f0f7;
+  --noite: 0;
+  --sol-y: 20%;
+  --px: 0;
+  --py: 0;
+  --moldura: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36' shape-rendering='crispEdges'%3E%3Crect x='4' y='0' width='28' height='1' fill='%235B3A1E'/%3E%3Crect x='3' y='1' width='30' height='1' fill='%235B3A1E'/%3E%3Crect x='2' y='2' width='32' height='1' fill='%235B3A1E'/%3E%3Crect x='1' y='3' width='34' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='4' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='5' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='6' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='7' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='8' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='9' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='10' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='11' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='12' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='13' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='14' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='15' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='16' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='17' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='18' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='19' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='20' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='21' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='22' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='23' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='24' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='25' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='26' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='27' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='28' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='29' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='30' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='31' width='36' height='1' fill='%235B3A1E'/%3E%3Crect x='1' y='32' width='34' height='1' fill='%235B3A1E'/%3E%3Crect x='2' y='33' width='32' height='1' fill='%235B3A1E'/%3E%3Crect x='3' y='34' width='30' height='1' fill='%235B3A1E'/%3E%3Crect x='4' y='35' width='28' height='1' fill='%235B3A1E'/%3E%3Crect x='5' y='2' width='26' height='1' fill='%23C68B4E'/%3E%3Crect x='4' y='3' width='28' height='1' fill='%23C68B4E'/%3E%3Crect x='3' y='4' width='30' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='5' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='6' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='7' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='8' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='9' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='10' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='11' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='12' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='13' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='14' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='15' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='16' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='17' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='18' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='19' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='20' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='21' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='22' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='23' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='24' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='25' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='26' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='27' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='28' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='29' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='30' width='32' height='1' fill='%23C68B4E'/%3E%3Crect x='3' y='31' width='30' height='1' fill='%23C68B4E'/%3E%3Crect x='4' y='32' width='28' height='1' fill='%23C68B4E'/%3E%3Crect x='5' y='33' width='26' height='1' fill='%23C68B4E'/%3E%3Crect x='6' y='4' width='24' height='1' fill='%238A5A2B'/%3E%3Crect x='5' y='5' width='26' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='6' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='7' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='8' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='9' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='10' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='11' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='12' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='13' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='14' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='15' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='16' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='17' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='18' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='19' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='20' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='21' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='22' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='23' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='24' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='25' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='26' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='27' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='28' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='29' width='28' height='1' fill='%238A5A2B'/%3E%3Crect x='5' y='30' width='26' height='1' fill='%238A5A2B'/%3E%3Crect x='6' y='31' width='24' height='1' fill='%238A5A2B'/%3E%3Crect x='8' y='7' width='20' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='8' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='9' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='10' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='11' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='12' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='13' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='14' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='15' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='16' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='17' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='18' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='19' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='20' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='21' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='22' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='23' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='24' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='25' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='26' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='7' y='27' width='22' height='1' fill='%235B3A1E'/%3E%3Crect x='8' y='28' width='20' height='1' fill='%235B3A1E'/%3E%3Crect x='8' y='8' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='9' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='10' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='11' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='12' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='13' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='14' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='15' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='16' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='17' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='18' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='19' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='20' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='21' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='22' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='23' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='24' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='25' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='26' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='8' y='27' width='20' height='1' fill='%23E8C98D'/%3E%3Crect x='10' y='10' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='11' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='12' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='13' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='14' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='15' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='16' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='17' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='18' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='19' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='20' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='21' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='22' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='23' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='24' width='16' height='1' fill='%23F3DDB0'/%3E%3Crect x='10' y='25' width='16' height='1' fill='%23F3DDB0'/%3E%3C/svg%3E");
+  --moldura-fina: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='2' y='0' width='14' height='1' fill='%235B3A1E'/%3E%3Crect x='1' y='1' width='16' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='2' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='3' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='4' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='5' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='6' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='7' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='8' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='9' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='10' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='11' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='12' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='13' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='14' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='15' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='1' y='16' width='16' height='1' fill='%235B3A1E'/%3E%3Crect x='2' y='17' width='14' height='1' fill='%235B3A1E'/%3E%3Crect x='3' y='2' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='3' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='4' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='5' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='6' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='7' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='8' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='9' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='10' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='11' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='12' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='13' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='2' y='14' width='14' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='15' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='4' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='5' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='6' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='7' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='8' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='9' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='10' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='11' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='12' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='13' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='5' y='5' width='8' height='1' fill='%23F3DDB0'/%3E%3Crect x='5' y='6' width='8' height='1' fill='%23F3DDB0'/%3E%3Crect x='5' y='7' width='8' height='1' fill='%23F3DDB0'/%3E%3Crect x='5' y='8' width='8' height='1' fill='%23F3DDB0'/%3E%3Crect x='5' y='9' width='8' height='1' fill='%23F3DDB0'/%3E%3Crect x='5' y='10' width='8' height='1' fill='%23F3DDB0'/%3E%3Crect x='5' y='11' width='8' height='1' fill='%23F3DDB0'/%3E%3Crect x='5' y='12' width='8' height='1' fill='%23F3DDB0'/%3E%3C/svg%3E");
+  --moldura-slot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='2' y='0' width='14' height='1' fill='%235B3A1E'/%3E%3Crect x='1' y='1' width='16' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='2' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='3' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='4' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='5' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='6' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='7' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='8' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='9' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='10' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='11' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='12' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='13' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='14' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='15' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='1' y='16' width='16' height='1' fill='%235B3A1E'/%3E%3Crect x='2' y='17' width='14' height='1' fill='%235B3A1E'/%3E%3Crect x='3' y='2' width='12' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='3' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='4' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='5' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='6' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='7' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='8' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='9' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='10' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='11' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='12' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='13' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='14' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='3' y='15' width='12' height='1' fill='%23C68B4E'/%3E%3Crect x='3' y='3' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='4' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='5' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='6' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='7' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='8' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='9' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='10' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='11' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='12' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='13' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='14' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='4' y='4' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='5' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='6' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='7' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='8' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='9' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='10' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='11' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='12' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='4' y='13' width='10' height='1' fill='%23E8C98D'/%3E%3Crect x='5' y='5' width='8' height='1' fill='%23F7E6C1'/%3E%3Crect x='5' y='6' width='8' height='1' fill='%23F7E6C1'/%3E%3Crect x='5' y='7' width='8' height='1' fill='%23F7E6C1'/%3E%3Crect x='5' y='8' width='8' height='1' fill='%23F7E6C1'/%3E%3Crect x='5' y='9' width='8' height='1' fill='%23F7E6C1'/%3E%3Crect x='5' y='10' width='8' height='1' fill='%23F7E6C1'/%3E%3Crect x='5' y='11' width='8' height='1' fill='%23F7E6C1'/%3E%3Crect x='5' y='12' width='8' height='1' fill='%23F7E6C1'/%3E%3C/svg%3E");
+  --moldura-madeira: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='2' y='0' width='14' height='1' fill='%235B3A1E'/%3E%3Crect x='1' y='1' width='16' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='2' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='3' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='4' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='5' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='6' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='7' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='8' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='9' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='10' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='11' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='12' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='13' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='14' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='0' y='15' width='18' height='1' fill='%235B3A1E'/%3E%3Crect x='1' y='16' width='16' height='1' fill='%235B3A1E'/%3E%3Crect x='2' y='17' width='14' height='1' fill='%235B3A1E'/%3E%3Crect x='3' y='2' width='12' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='3' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='4' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='5' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='6' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='7' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='8' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='9' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='10' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='11' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='12' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='13' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='2' y='14' width='14' height='1' fill='%23C68B4E'/%3E%3Crect x='3' y='15' width='12' height='1' fill='%23C68B4E'/%3E%3Crect x='3' y='3' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='4' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='5' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='6' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='7' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='8' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='9' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='10' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='11' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='12' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='13' width='12' height='1' fill='%238A5A2B'/%3E%3Crect x='3' y='14' width='12' height='1' fill='%238A5A2B'/%3E%3C/svg%3E");
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body {
+  color: var(--tinta);
+  font-family: var(--texto);
+  font-size: 20px;
+  line-height: 1.2;
+  background: var(--ceu-base);
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+p { margin: 0 0 8px; }
+h1, h2, h3 { font-family: var(--titulo); font-weight: 700; margin: 0; }
+img, svg { image-rendering: pixelated; }
+button { font: inherit; color: inherit; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+[hidden] { display: none !important; }
+
+/* ---------- Céu (atrás do 3D) ---------- */
+#ceu {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(var(--ceu-topo), var(--ceu-base) 85%);
+  overflow: hidden;
+}
+.estrelas {
+  position: absolute;
+  inset: 0 0 30%;
+  opacity: var(--noite);
+  background-image:
+    radial-gradient(#fff 1px, transparent 1.5px),
+    radial-gradient(#fff6c8 1px, transparent 1.5px);
+  background-size: 120px 96px, 196px 152px;
+  background-position: 12px 20px, 60px 72px;
+  transform: translate(calc(var(--px) * -6px), calc(var(--py) * 4px));
+}
+.astro {
+  position: absolute;
+  right: 16%;
+  top: var(--sol-y);
+  width: 48px;
+  height: 48px;
+  clip-path: polygon(12px 0, 36px 0, 36px 4px, 44px 4px, 44px 12px, 48px 12px, 48px 36px, 44px 36px, 44px 44px, 36px 44px, 36px 48px, 12px 48px, 12px 44px, 4px 44px, 4px 36px, 0 36px, 0 12px, 4px 12px, 4px 4px, 12px 4px);
+  transform: translate(calc(var(--px) * -10px), calc(var(--py) * 6px));
+}
+.sol { background: var(--ouro); box-shadow: inset -8px -8px 0 #e8a020; opacity: calc(1 - var(--noite)); }
+.lua { background: #f6f1dc; box-shadow: inset -8px -8px 0 #d8d0b0; opacity: var(--noite); top: 14%; right: 22%; }
+.nuvens {
+  position: absolute;
+  left: -10%;
+  width: 120%;
+  background-image: url('/ceu/nuvens.svg');
+  background-repeat: repeat-x;
+  image-rendering: pixelated;
+  opacity: calc(0.95 - var(--noite) * 0.6);
+}
+.nuvens.longe {
+  top: 8%;
+  height: 120px;
+  background-size: 640px 120px;
+  animation: deriva 160s linear infinite;
+  transform: translate(calc(var(--px) * -14px), calc(var(--py) * 6px));
+  filter: brightness(0.96);
+}
+.nuvens.perto {
+  top: 22%;
+  height: 240px;
+  background-size: 1280px 240px;
+  animation: deriva-perto 110s linear infinite;
+  transform: translate(calc(var(--px) * -28px), calc(var(--py) * 10px));
+  opacity: calc(0.7 - var(--noite) * 0.5);
+}
+@keyframes deriva { to { background-position-x: 640px; } }
+@keyframes deriva-perto { to { background-position-x: 1280px; } }
+body[data-estacao='winter'] #ceu { filter: saturate(0.75); }
+body[data-estacao='fall'] #ceu { filter: sepia(0.15); }
+
+#cena {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  image-rendering: pixelated;
+  touch-action: none;
+  cursor: grab;
+}
+
+/* ---------- Molduras ---------- */
+.moldura {
+  border: 12px solid transparent;
+  border-image: var(--moldura) 12 fill / 12px stretch;
+  filter: drop-shadow(var(--sombra));
+  padding: 8px 12px;
+}
+.moldura-fina {
+  border: 6px solid transparent;
+  border-image: var(--moldura-fina) 6 fill / 6px stretch;
+  filter: drop-shadow(0 4px 0 rgba(59, 36, 16, 0.35));
+}
+
+/* ---------- Botões ---------- */
+.botao {
+  font: 600 16px var(--titulo);
+  color: #fff4dc;
+  text-shadow: 2px 2px 0 var(--madeira-escura);
+  background: var(--madeira-clara);
+  border: 4px solid var(--madeira-escura);
+  box-shadow: inset -4px -4px 0 var(--madeira), inset 4px 4px 0 #e2a868, 0 4px 0 var(--madeira-escura);
+  padding: 8px 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  transition: transform 60ms steps(1);
+}
+.botao:hover { background: #d49a5c; }
+.botao:active, .botao[aria-pressed='true'] {
+  transform: translateY(2px);
+  box-shadow: inset 4px 4px 0 var(--madeira), inset -4px -4px 0 #e2a868, 0 2px 0 var(--madeira-escura);
+}
+.botao:disabled { filter: grayscale(0.8); opacity: 0.6; cursor: not-allowed; transform: none; }
+.botao.primario { background: var(--verde); box-shadow: inset -4px -4px 0 var(--verde-escuro), inset 4px 4px 0 #94cc5a, 0 4px 0 var(--madeira-escura); }
+.botao.primario:hover { background: #7aba36; }
+.botao.secundario { background: var(--pergaminho); color: var(--tinta); text-shadow: none; box-shadow: inset -4px -4px 0 var(--pergaminho-2), inset 4px 4px 0 #fff4dc, 0 4px 0 var(--madeira-escura); }
+.botao.secundario:hover { background: #f8e7c4; }
+.botao.perigo { background: var(--vermelho); box-shadow: inset -4px -4px 0 #9c2229, inset 4px 4px 0 #f0696f, 0 4px 0 var(--madeira-escura); }
+.botao.largo { width: 100%; }
+.botao.quadrado { width: 44px; padding: 0; font-size: 24px; }
+.botao.pequeno { min-height: 36px; width: 36px; }
+.botao .icone { width: 24px; height: 24px; }
+.icone-botao { width: 52px; height: 52px; padding: 8px; }
+.icone-botao svg { width: 28px; height: 28px; }
+:focus-visible { outline: 4px solid var(--ouro); outline-offset: 2px; }
+
+.fechar {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  font: 700 18px var(--titulo);
+  color: #fff4dc;
+  background: var(--vermelho);
+  border: 4px solid var(--madeira-escura);
+  box-shadow: inset -4px -4px 0 #9c2229, inset 4px 4px 0 #f0696f;
+  cursor: pointer;
+}
+.fechar:active { transform: translateY(2px); }
+
+/* ---------- Barras em blocos ---------- */
+.blocos { display: flex; gap: 2px; padding: 4px; background: var(--madeira-escura); }
+.blocos i { flex: 1; height: 12px; background: #7a5634; }
+.blocos i.on { background: var(--verde); box-shadow: inset 0 -4px 0 var(--verde-escuro), inset 0 2px 0 #9ad65e; }
+.blocos.ouro i { height: 16px; }
+.blocos.ouro i.on { background: var(--ouro); box-shadow: inset 0 -4px 0 #c99510, inset 0 2px 0 #ffe486; }
+.blocos.mini { padding: 2px; gap: 1px; }
+.blocos.mini i { height: 6px; box-shadow: none; }
+.linha.feito .blocos.mini i.on, .blocos.mini i.on { box-shadow: none; }
+
+/* ---------- HUD ---------- */
+.hud {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 248px;
+  z-index: 2;
+}
+.hud-marca { font: 600 14px var(--titulo); color: var(--tinta-suave); margin-bottom: 4px; }
+.hud-linha { display: flex; align-items: center; gap: 8px; }
+.hud-estrela svg { width: 40px; height: 40px; display: block; animation: pulsar 2.4s steps(2) infinite; }
+.hud-valor { font: 700 48px/1 var(--titulo); margin: 0; }
+.hud-valor small { font-size: 24px; margin-left: 2px; }
+.hud-rotulo { font-size: 20px; margin: 0 0 4px; }
+.hud-status { font-size: 18px; color: var(--tinta-suave); margin: 8px 0 0; }
+@keyframes pulsar { 50% { transform: translateY(-2px); } }
+
+/* ---------- Controles do mapa ---------- */
+.controles {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+
+/* ---------- Barra de itens (hotbar) ---------- */
+.barra {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  z-index: 2;
+  max-width: calc(100vw - 16px);
+}
+.slot {
+  position: relative;
+  width: 60px;
+  height: 64px;
+  flex: 0 0 auto;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: none;
+  border: 6px solid transparent;
+  border-image: var(--moldura-slot) 6 fill / 6px stretch;
+}
+.slot .icone { width: 32px; height: 32px; margin-top: -8px; }
+.slot:hover { filter: brightness(1.06); }
+.slot:active { transform: translateY(2px); }
+.slot[aria-pressed='true'] { outline: 4px solid var(--vermelho); outline-offset: -2px; }
+.tecla { position: absolute; top: -4px; left: -1px; font-size: 14px; color: var(--tinta-suave); }
+.enchimento { position: absolute; left: -1px; right: -1px; bottom: -2px; }
+.slot.completo::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  background: var(--ouro);
+  border: 2px solid var(--madeira-escura);
+  transform: rotate(45deg);
+}
+
+/* ---------- Painel lateral ---------- */
+.painel {
+  position: fixed;
+  top: 84px;
+  right: 16px;
+  bottom: 104px;
+  width: min(440px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  z-index: 3;
+  padding: 8px 8px 4px;
+}
+.painel.largo { width: min(600px, calc(100vw - 32px)); }
+.painel-topo { display: flex; align-items: center; gap: 12px; padding: 0 4px 8px; }
+.painel-icone { width: 52px; height: 52px; flex: 0 0 auto; display: grid; place-items: center;
+  border: 6px solid transparent; border-image: var(--moldura-slot) 6 fill / 6px stretch; }
+.painel-icone .icone, .painel-icone svg { width: 32px; height: 32px; }
+.painel-titulos { flex: 1; min-width: 0; }
+.painel-titulos h2 { font-size: 20px; line-height: 1.1; }
+.painel-titulos p { margin: 2px 0 0; font-size: 18px; color: var(--tinta-suave); }
+.painel-barra { padding: 0 4px 8px; }
+.corpo { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 8px 8px 4px; scrollbar-color: var(--madeira) var(--pergaminho-2); }
+.texto-dica { color: var(--tinta-suave); font-size: 18px; max-width: 60ch; }
+.texto-dica.centro { text-align: center; }
+.destaque { font-size: 22px; }
+.destaque strong { font: 700 28px var(--titulo); }
+.subtitulo { font-size: 16px; margin: 16px 0 4px; display: flex; justify-content: space-between; }
+.subtitulo small { font: 18px var(--texto); color: var(--tinta-suave); }
+
+/* Ferramentas de filtro */
+.ferramentas { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 0 4px 8px; }
+.segmentado { display: inline-flex; border: 4px solid var(--madeira-escura); background: var(--madeira-escura); gap: 2px; }
+.seg {
+  font: 600 14px var(--titulo);
+  background: var(--pergaminho-2);
+  border: 0;
+  padding: 6px 12px;
+  min-height: 36px;
+  cursor: pointer;
+  box-shadow: inset 0 -3px 0 #c9a46a;
+}
+.seg[aria-pressed='true'] { background: var(--verde); color: #fff4dc; text-shadow: 1px 1px 0 var(--madeira-escura); box-shadow: inset 0 3px 0 var(--verde-escuro); }
+.busca { flex: 1; min-width: 140px; }
+.busca input, .form-conta input, input[type='number'] {
+  width: 100%;
+  font: 20px var(--texto);
+  color: var(--tinta);
+  background: #fff4dc;
+  border: 4px solid var(--madeira-escura);
+  box-shadow: inset 4px 4px 0 var(--pergaminho-2);
+  padding: 4px 8px;
+  min-height: 40px;
+}
+.interruptor { display: inline-flex; align-items: center; gap: 8px; font-size: 18px; cursor: pointer; }
+.chips { display: flex; gap: 4px; overflow-x: auto; padding: 0 4px 8px; scrollbar-width: thin; }
+.chip {
+  flex: 0 0 auto;
+  font: 500 14px var(--titulo);
+  background: var(--pergaminho);
+  border: 3px solid var(--madeira);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.chip[aria-pressed='true'] { background: var(--madeira-clara); color: #fff4dc; border-color: var(--madeira-escura); }
+
+/* Grade de inventário */
+.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 4px; }
+.slot-item {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  background: none;
+  cursor: pointer;
+  border: 6px solid transparent;
+  border-image: var(--moldura-slot) 6 fill / 6px stretch;
+  padding: 0;
+}
+.slot-item img { width: 40px; height: 40px; object-fit: contain; filter: brightness(0) opacity(0.38); transition: filter 80ms steps(1); }
+.slot-item.feito img, .slot-item:hover img, .slot-item.selecionado img { filter: none; }
+.slot-item.selecionado { outline: 4px solid var(--vermelho); outline-offset: -2px; }
+.slot-item:active { transform: translateY(2px); }
+.visto {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 16px;
+  height: 16px;
+  background: var(--verde);
+  border: 2px solid var(--madeira-escura);
+}
+.visto::after { content: ''; position: absolute; left: 3px; top: 0; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.brilho { animation: brilho 700ms steps(6); }
+.brilho::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--ouro), var(--ouro)) 50% 0 / 4px 12px no-repeat,
+    linear-gradient(var(--ouro), var(--ouro)) 50% 100% / 4px 12px no-repeat,
+    linear-gradient(var(--ouro), var(--ouro)) 0 50% / 12px 4px no-repeat,
+    linear-gradient(var(--ouro), var(--ouro)) 100% 50% / 12px 4px no-repeat;
+  animation: faiscas 700ms steps(4) forwards;
+}
+@keyframes brilho { 30% { transform: scale(1.12); } }
+@keyframes faiscas { from { opacity: 1; transform: scale(0.6); } to { opacity: 0; transform: scale(1.3); } }
+.vazio { text-align: center; color: var(--tinta-suave); padding: 24px 8px; }
+
+/* Detalhe do item */
+.detalhe {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 4px 12px;
+  margin: 0 4px 8px;
+  padding: 8px;
+  background: #f8e8c6;
+  border: 4px solid var(--madeira);
+  box-shadow: inset 0 -4px 0 var(--pergaminho-2);
+  max-height: 40%;
+  overflow-y: auto;
+}
+.detalhe.vazio-detalhe { display: block; color: var(--tinta-suave); }
+.detalhe.vazio-detalhe p { margin: 0; }
+.detalhe-icone { width: 72px; height: 72px; display: grid; place-items: center;
+  border: 6px solid transparent; border-image: var(--moldura-slot) 6 fill / 6px stretch; }
+.detalhe-icone img { width: 48px; height: 48px; object-fit: contain; }
+.detalhe-texto h3 { font-size: 18px; }
+.detalhe-secao { font-size: 16px; color: var(--tinta-suave); margin: 0 0 4px; }
+.detalhe dl { display: grid; grid-template-columns: auto 1fr; gap: 0 8px; margin: 0; font-size: 18px; }
+.detalhe dt { color: var(--tinta-suave); }
+.detalhe dd { margin: 0; }
+.detalhe details { font-size: 18px; margin-top: 4px; }
+.detalhe summary { cursor: pointer; font: 500 14px var(--titulo); }
+.nota { white-space: pre-line; margin: 4px 0 0; }
+.detalhe .botao { grid-column: 1 / -1; }
+
+/* Listas */
+.lista { list-style: none; margin: 0; padding: 0; }
+.linha { display: flex; align-items: center; gap: 12px; padding: 8px 4px; border-bottom: 2px dashed var(--pergaminho-2); }
+label.linha { cursor: pointer; }
+.linha-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.linha-texto strong { font: 600 16px var(--titulo); }
+.linha-texto small { font-size: 18px; color: var(--tinta-suave); }
+.linha.feito .linha-texto strong { color: var(--verde-escuro); }
+.linha.grande .linha-texto strong { font-size: 20px; }
+.pontos { font: 18px var(--texto); color: var(--madeira); }
+.caixa {
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  margin: 0;
+  background: #fff4dc;
+  border: 4px solid var(--madeira-escura);
+  box-shadow: inset 2px 2px 0 var(--pergaminho-2);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.caixa:checked { background: var(--verde); box-shadow: inset -2px -2px 0 var(--verde-escuro); }
+.caixa:checked::after { content: ''; width: 6px; height: 12px; border: solid #fff; border-width: 0 4px 4px 0; transform: rotate(45deg) translate(-1px, -2px); }
+.meta-campo { display: flex; align-items: center; gap: 4px; font-size: 18px; color: var(--tinta-suave); }
+.meta-campo input { width: 88px; text-align: right; }
+
+/* Corações e níveis */
+.pips { display: flex; gap: 0; flex-wrap: wrap; }
+.pip { width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.pip svg { width: 21px; height: 18px; }
+.pip.extra { opacity: 0.5; }
+.pip:active { transform: translateY(2px); }
+.pip .ponto { width: 16px; height: 16px; background: var(--pergaminho-2); border: 3px solid var(--madeira); }
+.pip[aria-pressed='true'] .ponto { background: var(--ouro); border-color: var(--madeira-escura); }
+
+/* Aldeões */
+.aldeoes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.aldeao { display: flex; gap: 12px; padding: 8px; background: #f8e8c6; border: 4px solid var(--pergaminho-2); }
+.aldeao.feito { border-color: var(--verde); }
+.retrato { width: 80px; height: 80px; flex: 0 0 auto; border: 6px solid transparent; border-image: var(--moldura-madeira) 6 fill / 6px stretch; background: #c9e6ef; }
+.retrato img { width: 100%; height: 100%; display: block; }
+.aldeao-info { flex: 1; min-width: 0; }
+.aldeao-info h3 { font-size: 18px; }
+.selo { color: var(--vermelho); }
+.pequeno { font-size: 18px; color: var(--tinta-suave); margin: 2px 0 4px; }
+.aldeao details summary { cursor: pointer; font: 500 14px var(--titulo); margin-top: 4px; }
+.presentes { display: flex; flex-wrap: wrap; gap: 4px; }
+.presente { width: 28px; height: 28px; padding: 2px; background: #fff4dc; border: 2px solid var(--pergaminho-2); }
+.presente-texto { font-size: 16px; padding: 2px 6px; background: #fff4dc; border: 2px solid var(--pergaminho-2); }
+
+/* Mais coleções */
+.extras { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.extra {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 8px;
+  cursor: pointer;
+  text-align: left;
+  background: none;
+}
+.extra:active { transform: translateY(2px); }
+.extra strong { display: block; font: 600 15px var(--titulo); }
+.extra small { font-size: 18px; color: var(--tinta-suave); }
+.extra .blocos { grid-column: 1 / -1; }
+.icone.grande { width: 48px; height: 48px; }
+
+/* ---------- Dica e toasts ---------- */
+#dica {
+  position: fixed;
+  pointer-events: none;
+  z-index: 20;
+  font: 600 15px var(--titulo);
+  background: var(--pergaminho);
+  border: 4px solid var(--madeira-escura);
+  box-shadow: 4px 4px 0 rgba(59, 36, 16, 0.4);
+  padding: 4px 8px;
+  max-width: 280px;
+}
+#toasts { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 30; display: grid; gap: 8px; justify-items: center; }
+.toast { padding: 8px 16px; font-size: 20px; max-width: min(420px, calc(100vw - 32px)); animation: entra 240ms steps(4); }
+.toast.conquista { display: flex; gap: 12px; align-items: center; }
+.toast.conquista strong { font: 700 16px var(--titulo); }
+.toast-estrela svg { width: 40px; height: 40px; display: block; animation: girar 800ms steps(8) 2; }
+@keyframes entra { from { transform: translateY(-16px); opacity: 0; } }
+@keyframes girar { 50% { transform: scale(1.3) rotate(45deg); } }
+
+/* ---------- Modais ---------- */
+#modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(59, 36, 16, 0.35);
+}
+.janela { width: min(460px, 100%); max-height: calc(100vh - 32px); display: flex; flex-direction: column; padding: 16px 20px; }
+.janela.config { width: min(520px, 100%); padding: 8px 8px 4px; }
+.janela.config section { padding: 8px 4px 12px; border-bottom: 2px dashed var(--pergaminho-2); display: grid; gap: 8px; justify-items: start; }
+.janela.config section h3 { font-size: 15px; }
+.boas { text-align: center; gap: 12px; overflow-y: auto; }
+.boas-idioma { display: flex; justify-content: flex-end; }
+.logo {
+  font-size: 40px;
+  line-height: 1;
+  color: var(--ouro);
+  text-shadow: 4px 0 0 var(--madeira-escura), -4px 0 0 var(--madeira-escura), 0 4px 0 var(--madeira-escura), 0 -4px 0 var(--madeira-escura), 4px 4px 0 var(--madeira-escura), 0 8px 0 var(--madeira);
+  margin: 4px 0 8px;
+}
+.sub { font-size: 20px; }
+.dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+.google { background: #fff4dc; color: var(--tinta); text-shadow: none; box-shadow: inset -4px -4px 0 var(--pergaminho-2), inset 4px 4px 0 #fff, 0 4px 0 var(--madeira-escura); }
+.google .g { font: 700 20px var(--titulo); color: #4285f4; }
+.convidado { background: var(--madeira); }
+.ou { display: flex; align-items: center; gap: 8px; color: var(--tinta-suave); margin: 0; }
+.ou::before, .ou::after { content: ''; flex: 1; height: 4px; background: var(--pergaminho-2); }
+.form-conta { display: grid; gap: 8px; text-align: left; }
+.form-conta label { display: grid; gap: 2px; font: 500 14px var(--titulo); }
+.form-conta small { font: 16px var(--texto); color: var(--tinta-suave); }
+.links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.link { background: none; border: 0; padding: 4px 0; color: var(--madeira); text-decoration: underline; cursor: pointer; font-size: 18px; }
+.erro { color: var(--vermelho); font-size: 18px; }
+.info { color: var(--verde-escuro); font-size: 18px; }
+
+/* ---------- Telas pequenas ---------- */
+@media (max-width: 760px) {
+  body { font-size: 18px; }
+  .hud { top: 8px; left: 8px; width: 184px; }
+  .hud-valor { font-size: 32px; }
+  .hud-estrela svg { width: 28px; height: 28px; }
+  .hud-status, .hud-marca { display: none; }
+  .controles { top: 8px; right: 8px; flex-direction: column; }
+  .icone-botao { width: 44px; height: 44px; min-height: 44px; }
+  .barra { bottom: 8px; overflow-x: auto; justify-content: flex-start; }
+  .slot { width: 48px; height: 52px; }
+  .slot .icone { width: 26px; height: 26px; }
+  .painel, .painel.largo { top: auto; left: 8px; right: 8px; bottom: 80px; width: auto; height: 64vh; }
+  .grade { grid-template-columns: repeat(5, 1fr); }
+  .detalhe { grid-template-columns: 56px 1fr; }
+  .detalhe-icone { width: 56px; height: 56px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+body.sem-animacao *, body.sem-animacao *::before, body.sem-animacao *::after { animation: none !important; }

@@ -1,0 +1,20 @@
+# Dependências e build
+node_modules
+dist
+
+# Variáveis de ambiente (chaves do Firebase etc.). O .env.example é só o modelo, sem valores.
+.env
+.env.*
+!.env.example
+server/.env
+server/service-account.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
