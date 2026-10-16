@@ -50,7 +50,7 @@ describe('isSavedState', () => {
 
 describe('normalizeConfig', () => {
   it('uses the defaults when nothing was saved', () => {
-    expect(normalizeConfig(null)).toEqual({ language: 'en', season: 'spring', hour: 'auto', animations: true, entry: null });
+    expect(normalizeConfig(null)).toEqual({ language: 'en', season: 'auto', hour: 'auto', animations: true, entry: null });
   });
 
   it('migrates the legacy Portuguese keys and values', () => {

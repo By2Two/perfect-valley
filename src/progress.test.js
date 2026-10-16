@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CATEGORIES, SHEET, SKILLS } from './catalog.js';
 import { createDefaultState } from './store.js';
-import { applySpreadsheetProgress, completionFraction, countCollected, farmerLevel, perfectionPercent, requiredHearts, totalOf } from './progress.js';
+import { completionFraction, countCollected, farmerLevel, perfectionPercent, requiredHearts, totalOf } from './progress.js';
 
 const maxedSkills = () => Object.fromEntries(SKILLS.map((skill) => [skill, 10]));
 
@@ -45,16 +45,5 @@ describe('progress', () => {
 
   it('treats every category total as positive', () => {
     CATEGORIES.forEach((category) => expect(totalOf(category)).toBeGreaterThan(0));
-  });
-
-  it('imports the checks saved in the spreadsheet without lowering existing progress', () => {
-    const state = createDefaultState();
-    state.skills.farming = 10;
-    state.items.shipping.manual = true;
-    applySpreadsheetProgress(state);
-    expect(state.skills.farming).toBe(10);
-    expect(state.items.shipping.manual).toBe(true);
-    const checkedShipping = SHEET.collections.shipping.filter((item) => item.fromSpreadsheet);
-    checkedShipping.forEach((item) => expect(state.items.shipping[item.id]).toBe(true));
   });
 });

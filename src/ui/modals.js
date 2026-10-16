@@ -1,10 +1,9 @@
 import { t, getLanguage } from '../i18n.js';
 import { getState, replaceState, createDefaultState, normalizeState, isSavedState, getConfig, setConfig } from '../store.js';
-import { applySpreadsheetProgress } from '../progress.js';
 import * as firebase from '../firebase.js';
 import { escapeHtml } from './util.js';
 
-const SEASONS = ['spring', 'summer', 'fall', 'winter'];
+const SEASONS = ['auto', 'spring', 'summer', 'fall', 'winter'];
 const HOURS = ['auto', 'day', 'sunset', 'night'];
 const LANGUAGE_OPTIONS = [
   ['en', 'English'],
@@ -85,7 +84,7 @@ export function createModals({ notice }) {
 
   function accountsHtml() {
     if (!firebase.isFirebaseEnabled) {
-      return `<p class="text-hint">${t('welcome.withoutFirebase')}</p>`;
+      return '';
     }
     return `
       <button class="button wide google" data-action="google" ${isBusy ? 'disabled' : ''}><span class="g">G</span> ${t('welcome.google')}</button>
@@ -135,10 +134,8 @@ export function createModals({ notice }) {
         <section><h3>${t('settings.season')}</h3>${selectorHtml('season', config.season, seasonOptions)}</section>
         <section><h3>${t('settings.hour')}</h3>${selectorHtml('hour', config.hour, hourOptions)}</section>
         <section><h3>${t('settings.animations')}</h3>${selectorHtml('animations', String(config.animations), animationOptions)}</section>
-        <section><h3>${t('settings.account')}</h3>${settingsAccountHtml()}</section>
+        ${firebase.isFirebaseEnabled ? `<section><h3>${t('settings.account')}</h3>${settingsAccountHtml()}</section>` : ''}
         <section><h3>${t('settings.data')}</h3>
-          <button class="button primary" data-action="import-spreadsheet">${t('settings.importSpreadsheet')}</button>
-          <p class="text-hint">${t('settings.importSpreadsheetHint')}</p>
           <div class="pair">
             <button class="button secondary" data-action="download">${t('settings.download')}</button>
             <button class="button secondary" data-action="restore">${t('settings.restore')}</button>
@@ -201,13 +198,6 @@ export function createModals({ notice }) {
     render();
   }
 
-  function importSpreadsheet() {
-    const state = structuredClone(getState());
-    applySpreadsheetProgress(state);
-    replaceState(state, { touch: true });
-    notice(t('msg.imported'));
-  }
-
   function eraseProgress() {
     if (confirm(t('settings.eraseConfirm'))) {
       replaceState(createDefaultState(), { touch: true });
@@ -239,7 +229,6 @@ export function createModals({ notice }) {
     forgot: sendPasswordReset,
     signIn: () => open('welcome'),
     signOut: signOutUser,
-    'import-spreadsheet': importSpreadsheet,
     download: downloadBackup,
     restore: () => backupInput.click(),
     erase: eraseProgress,

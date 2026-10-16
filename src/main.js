@@ -1,6 +1,7 @@
 import './style.css';
 import { setLanguage, onTranslationLoaded } from './i18n.js';
 import { getState, subscribe, replaceState, setCloudSaver, getConfig, onConfig } from './store.js';
+import { resolveSeason } from './season.js';
 import { createScene } from './world/scene.js';
 import { createApp } from './ui/app.js';
 import { createModals } from './ui/modals.js';
@@ -19,10 +20,10 @@ app = createApp({ scene, openConfig: modals.openConfig });
 let currentLanguage = getConfig().language;
 function applyConfig(c) {
   setLanguage(c.language);
-  scene.setSeason(c.season);
+  scene.setSeason(resolveSeason(c.season));
   scene.setHour(c.hour);
   scene.setAnimations(c.animations);
-  document.body.dataset.season = c.season;
+  document.body.dataset.season = resolveSeason(c.season);
   document.body.classList.toggle('without-animation', !c.animations);
 }
 onConfig((c) => {

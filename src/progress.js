@@ -42,37 +42,3 @@ export const completedCount = (category, state) => COMPLETED_COUNTERS[category.k
 export const totalOf = (category) => TOTAL_COUNTERS[category.kind]?.(category) ?? 1;
 export const completionFraction = (category, state) => completedCount(category, state) / totalOf(category);
 export const perfectionPercent = (state) => CATEGORIES.reduce((total, category) => total + category.weight * completionFraction(category, state), 0);
-
-const markFromSpreadsheet = (entries, checked) => {
-  entries
-    .filter((entry) => entry.fromSpreadsheet)
-    .forEach((entry) => {
-      checked[entry.id] = true;
-    });
-};
-
-export function applySpreadsheetProgress(state) {
-  for (const [collection, items] of Object.entries(SHEET.collections)) {
-    state.items[collection] ??= {};
-    markFromSpreadsheet(items, state.items[collection]);
-  }
-  markFromSpreadsheet(SHEET.walnuts, state.walnuts);
-  markFromSpreadsheet(SHEET.stardrops, state.stardrops);
-  markFromSpreadsheet(SHEET.obelisks, state.obelisks);
-  SHEET.villagers
-    .filter((villager) => villager.fromSpreadsheet)
-    .forEach((villager) => {
-      state.friends[villager.name] = Math.max(state.friends[villager.name] || 0, requiredHearts(villager));
-    });
-  SHEET.monsterGoals
-    .filter((monster) => monster.fromSpreadsheet)
-    .forEach((monster) => {
-      state.monsters[monster.id] = Math.max(state.monsters[monster.id] || 0, monster.goal);
-    });
-  if (SHEET.fromSpreadsheet.clock) {
-    state.clock = true;
-  }
-  for (const [skill, level] of Object.entries(SHEET.fromSpreadsheet.skills)) {
-    state.skills[skill] = Math.max(state.skills[skill] || 0, level);
-  }
-}

@@ -22,7 +22,7 @@ const LEGACY_CONFIG_KEYS = { idioma: 'language', estacao: 'season', hora: 'hour'
 const LEGACY_HOUR_VALUES = { dia: 'day', tarde: 'sunset', noite: 'night' };
 const LEGACY_ENTRY_VALUES = { conta: 'account' };
 
-const DEFAULT_CONFIG = { language: 'en', season: 'spring', hour: 'auto', animations: true, entry: null };
+const DEFAULT_CONFIG = { language: 'en', season: 'auto', hour: 'auto', animations: true, entry: null };
 
 const asPlainObject = (value) => (value && typeof value === 'object' && !Array.isArray(value) ? value : {});
 
