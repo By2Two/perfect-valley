@@ -1,269 +1,380 @@
-import { CATEGORIAS, SHEET, fracao, perfeicao } from '../data.js';
+import { CATEGORIES } from '../catalog.js';
+import { completionFraction, perfectionPercent } from '../progress.js';
 import { getState, update } from '../store.js';
-import { t, getIdioma } from '../i18n.js';
-import { icone } from '../icons.js';
-import { esc, htmlIcone, barraBlocos, formatarPct, limitar } from './util.js';
-import { htmlPainel, filtroDe } from './panels.js';
+import { t, getLanguage } from '../i18n.js';
+import { pixelIcon } from '../icons.js';
+import { escapeHtml, iconHtml, blockBarHtml, formatPercent, clamp } from './util.js';
+import { panelHtml, filterOf, collectionOfPanel, isReferenceOnly } from './panels.js';
 
-const TECLAS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='];
-const SLOTS = [...CATEGORIAS.map((c) => c.id), 'extras'];
-const ACOES_DE_MUDANCA = new Set(['marcar', 'relogio', 'monstro', 'rapido', 'busca']);
+const SLOT_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='];
+const EXTRAS_SLOT = 'extras';
+const SLOTS = [...CATEGORIES.map((category) => category.id), EXTRAS_SLOT];
+const CHANGE_ACTIONS = new Set(['mark', 'clock', 'monster', 'quick', 'search']);
+const CONTROLS = [
+  { action: 'zoomOut', icon: 'minus', labelKey: 'btn.zoomOut' },
+  { action: 'zoomIn', icon: 'plus', labelKey: 'btn.zoomIn' },
+  { action: 'recenter', icon: 'target', labelKey: 'btn.recenter' },
+  { action: 'config', icon: 'gear', labelKey: 'btn.config' },
+];
+const HUD_BAR_BLOCKS = 25;
+const SLOT_BAR_BLOCKS = 5;
+const MAX_KILL_COUNT = 99999;
+const NOTICE_DURATION_MS = 4200;
+const ACHIEVEMENT_DURATION_MS = 5000;
+const HINT_OFFSET = { x: 14, y: 18, margin: 8 };
+const FOCUSABLE_INPUTS = 'input, textarea, select';
 
-export function criarApp({ cena, abrirConfig }) {
-  const $ = (id) => document.getElementById(id);
-  const hud = $('hud');
-  const controles = $('controles');
-  const barra = $('barra');
-  const painel = $('painel');
-  const dica = $('dica');
-  const toasts = $('toasts');
+export function createApp({ scene, openConfig }) {
+  const byId = (id) => document.getElementById(id);
+  const hud = byId('hud');
+  const controls = byId('controls');
+  const bar = byId('bar');
+  const panel = byId('panel');
+  const hint = byId('hint');
+  const toasts = byId('toasts');
 
-  let aberto = null;
-  let historico = [];
-  let statusChave = 'hud.local';
-  let ultimasFracoes = null;
-  let brilhar = null;
+  let openPanelId = null;
+  let panelHistory = [];
+  let statusKey = 'hud.local';
+  let lastFractions = null;
+  let highlightedItemId = null;
 
-  // ---------- Estrutura fixa ----------
-  function montar() {
-    hud.className = 'moldura hud';
+  function slotHtml(id, index) {
+    const category = CATEGORIES.find((candidate) => candidate.id === id);
+    const name = t(`short.${id}`);
+    return `<button class="slot" data-slot="${id}" aria-pressed="${openPanelId === id}" aria-label="${name}" data-hint="${name} · ${t('key', { k: SLOT_KEYS[index] })}">
+        <span class="key" aria-hidden="true">${SLOT_KEYS[index]}</span>${iconHtml(category ? category.icon : { pixel: 'backpack' })}
+        ${category ? '<span class="fill"></span>' : ''}</button>`;
+  }
+
+  function controlHtml({ action, icon, labelKey }) {
+    return `<button class="button icon-button" data-action="${action}" aria-label="${t(labelKey)}" data-hint="${t(labelKey)}">${pixelIcon(icon)}</button>`;
+  }
+
+  function mount() {
+    hud.className = 'frame hud';
     hud.innerHTML = `
-      <p class="hud-marca">${t('app.nome')}</p>
-      <div class="hud-linha">
-        <div class="hud-estrela">${icone('estrela')}</div>
-        <p class="hud-valor"><span data-pct>0.0</span><small>%</small></p>
+      <p class="hud-brand">${t('app.name')}</p>
+      <div class="hud-line">
+        <div class="hud-star">${pixelIcon('star')}</div>
+        <p class="hud-value"><span data-pct>0.0</span><small>%</small></p>
       </div>
-      <p class="hud-rotulo">${t('hud.perfeicao')}</p>
-      <div data-barra></div>
+      <p class="hud-label">${t('hud.perfection')}</p>
+      <div data-bar></div>
       <p class="hud-status" data-status></p>`;
-
-    controles.innerHTML = [
-      ['afastar', 'menos', 'btn.afastar'], ['aproximar', 'mais', 'btn.aproximar'],
-      ['centralizar', 'alvo', 'btn.centralizar'], ['config', 'engrenagem', 'btn.config'],
-    ].map(([acao, ic, chave]) => `<button class="botao icone-botao" data-acao="${acao}" aria-label="${t(chave)}" data-dica="${t(chave)}">${icone(ic)}</button>`).join('');
-
-    barra.className = 'moldura barra';
-    barra.innerHTML = SLOTS.map((id, i) => {
-      const cat = CATEGORIAS.find((c) => c.id === id);
-      const nome = t(`curto.${id}`);
-      return `<button class="slot" data-slot="${id}" aria-pressed="${aberto === id}" aria-label="${nome}" data-dica="${nome} · ${t('tecla', { k: TECLAS[i] })}">
-        <span class="tecla" aria-hidden="true">${TECLAS[i]}</span>${htmlIcone(cat ? cat.icone : { pixel: 'mochila' })}
-        ${cat ? '<span class="enchimento"></span>' : ''}</button>`;
-    }).join('');
-    atualizar(getState());
-    status(statusChave);
+    controls.innerHTML = CONTROLS.map(controlHtml).join('');
+    bar.className = 'frame bar';
+    bar.innerHTML = SLOTS.map(slotHtml).join('');
+    refresh(getState());
+    setStatus(statusKey);
   }
 
-  controles.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-acao]');
-    if (!b) return;
-    const acao = b.dataset.acao;
-    if (acao === 'config') abrirConfig();
-    else cena[acao]();
-  });
-  barra.addEventListener('click', (e) => {
-    const b = e.target.closest('.slot');
-    if (b) alternar(b.dataset.slot);
-  });
-  window.addEventListener('keydown', (e) => {
-    if (e.target.matches('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (!$('modal').hidden) return;
-    const i = TECLAS.indexOf(e.key);
-    if (i >= 0) alternar(SLOTS[i]);
-    if (e.key === 'Escape') fechar();
-    if (e.key === '+') cena.aproximar();
-    if (e.key === '_') cena.afastar();
-  });
-
-  // Dicas em balão para qualquer elemento com data-dica
-  document.addEventListener('pointerover', (e) => {
-    if (e.target === document.getElementById('cena')) return;
-    const el = e.target.closest?.('[data-dica]');
-    mostrarDica(el ? el.dataset.dica : null, e.clientX, e.clientY);
-  });
-  document.addEventListener('pointerout', (e) => {
-    if (e.target.closest?.('[data-dica]')) mostrarDica(null);
-  });
-
-  // ---------- Painel ----------
-  function alternar(id) {
-    if (aberto === id) fechar();
-    else abrir(id);
-  }
-  function abrir(id, { empilhar = false } = {}) {
-    if (empilhar && aberto) historico.push(aberto);
-    else historico = [];
-    aberto = id;
-    painel.hidden = false;
-    render(true);
-    marcarSlots();
-    cena.abrirEspaco(true);
-  }
-  function fechar() {
-    aberto = null;
-    historico = [];
-    painel.hidden = true;
-    marcarSlots();
-    cena.abrirEspaco(false);
-  }
-  function marcarSlots() {
-    const raiz = aberto?.startsWith('col:') ? 'extras' : aberto;
-    barra.querySelectorAll('.slot').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.slot === raiz)));
-  }
-
-  function render(doTopo = false) {
-    if (!aberto) return;
-    mostrarDica(null);
-    const ativo = document.activeElement;
-    const focoId = ativo?.dataset?.foco;
-    const cursor = ativo?.selectionStart;
-    const rolagem = doTopo ? 0 : painel.querySelector('.corpo')?.scrollTop || 0;
-    painel.className = `moldura painel${aberto.startsWith('col:') || CATEGORIAS.find((c) => c.id === aberto)?.tipo === 'colecao' ? ' largo' : ''}`;
-    painel.innerHTML = htmlPainel(aberto, getState());
-    const corpo = painel.querySelector('.corpo');
-    if (corpo) corpo.scrollTop = rolagem;
-    if (focoId) {
-      const el = painel.querySelector(`[data-foco="${CSS.escape(focoId)}"]`);
-      el?.focus({ preventScroll: true });
-      if (el && cursor != null && el.setSelectionRange) el.setSelectionRange(cursor, cursor);
-    }
-    if (brilhar) {
-      painel.querySelector(`[data-foco="it-${CSS.escape(brilhar)}"]`)?.classList.add('brilho');
-      brilhar = null;
+  function togglePanel(id) {
+    if (openPanelId === id) {
+      closePanel();
+    } else {
+      openPanel(id);
     }
   }
 
-  const colecaoAtual = () => {
-    if (aberto?.startsWith('col:')) return aberto.slice(4);
-    return CATEGORIAS.find((c) => c.id === aberto)?.colecao;
-  };
+  function openPanel(id, { stack = false } = {}) {
+    panelHistory = stack && openPanelId ? [...panelHistory, openPanelId] : [];
+    openPanelId = id;
+    panel.hidden = false;
+    render({ fromTop: true });
+    markSlots();
+    scene.openSpace(true);
+  }
 
-  function alternarItem(col, id) {
-    update((s) => {
-      s.itens[col][id] = !s.itens[col][id];
-      if (s.itens[col][id]) brilhar = id;
-      else delete s.itens[col][id];
+  function closePanel() {
+    openPanelId = null;
+    panelHistory = [];
+    panel.hidden = true;
+    markSlots();
+    scene.openSpace(false);
+  }
+
+  function goBack() {
+    const previousPanelId = panelHistory.pop();
+    if (!previousPanelId) {
+      closePanel();
+      return;
+    }
+    openPanelId = previousPanelId;
+    render({ fromTop: true });
+    markSlots();
+  }
+
+  function markSlots() {
+    const rootSlot = collectionOfPanel(openPanelId) ? EXTRAS_SLOT : openPanelId;
+    bar.querySelectorAll('.slot').forEach((slot) => slot.setAttribute('aria-pressed', String(slot.dataset.slot === rootSlot)));
+  }
+
+  const currentCollection = () => collectionOfPanel(openPanelId) ?? CATEGORIES.find((category) => category.id === openPanelId)?.collection;
+
+  const isWidePanel = () =>
+    Boolean(collectionOfPanel(openPanelId)) || CATEGORIES.find((category) => category.id === openPanelId)?.kind === 'collection';
+
+  function restoreFocus({ focusId, cursor }) {
+    if (!focusId) {
+      return;
+    }
+    const element = panel.querySelector(`[data-focus="${CSS.escape(focusId)}"]`);
+    element?.focus({ preventScroll: true });
+    if (element?.setSelectionRange && cursor !== undefined) {
+      element.setSelectionRange(cursor, cursor);
+    }
+  }
+
+  function render({ fromTop = false } = {}) {
+    if (!openPanelId) {
+      return;
+    }
+    showHint(null);
+    const { focus: focusId } = document.activeElement?.dataset ?? {};
+    const cursor = document.activeElement?.selectionStart ?? undefined;
+    const scroll = fromTop ? 0 : panel.querySelector('.body')?.scrollTop || 0;
+    panel.className = `frame panel${isWidePanel() ? ' wide' : ''}`;
+    panel.innerHTML = panelHtml(openPanelId, getState());
+    const body = panel.querySelector('.body');
+    if (body) {
+      body.scrollTop = scroll;
+    }
+    restoreFocus({ focusId, cursor });
+    if (highlightedItemId) {
+      panel.querySelector(`[data-focus="it-${CSS.escape(highlightedItemId)}"]`)?.classList.add('glow');
+      highlightedItemId = null;
+    }
+  }
+
+  function toggleItem(collection, id) {
+    update((state) => {
+      state.items[collection][id] = !state.items[collection][id];
+      if (state.items[collection][id]) {
+        highlightedItemId = id;
+      } else {
+        delete state.items[collection][id];
+      }
     });
   }
 
-  painel.addEventListener('click', (e) => {
-    const el = e.target.closest('[data-acao]');
-    if (!el || ACOES_DE_MUDANCA.has(el.dataset.acao)) return;
-    const { acao, id, valor } = el.dataset;
-    const n = Number(el.dataset.n);
-    const col = colecaoAtual();
-    switch (acao) {
-      case 'fechar': fechar(); break;
-      case 'voltar': {
-        const anterior = historico.pop();
-        if (anterior) { aberto = anterior; render(true); marcarSlots(); } else fechar();
-        break;
-      }
-      case 'abrir': abrir(valor, { empilhar: true }); break;
-      case 'status': filtroDe(col).status = valor; render(true); break;
-      case 'secao': filtroDe(col).secao = valor || null; render(true); break;
-      case 'status-nozes': filtroDe('nozes').status = valor; render(); break;
-      case 'item': {
-        const f = filtroDe(col);
-        if (f.rapido && col !== 'bestiary') alternarItem(col, id);
-        else { f.sel = id; render(); }
-        break;
-      }
-      case 'alternar': alternarItem(col, id); break;
-      case 'coracao':
-        update((s) => { s.amigos[id] = (s.amigos[id] || 0) === n ? n - 1 : n; });
-        break;
-      case 'habilidade':
-        update((s) => { s.habilidades[id] = (s.habilidades[id] || 0) === n ? n - 1 : n; });
-        break;
-      default: break;
-    }
-  });
-
-  painel.addEventListener('input', (e) => {
-    const el = e.target.closest('[data-acao="busca"]');
-    if (!el) return;
-    filtroDe(colecaoAtual()).busca = el.value;
-    render(true);
-  });
-
-  painel.addEventListener('change', (e) => {
-    const el = e.target.closest('[data-acao]');
-    if (!el) return;
-    const { acao, id, chave } = el.dataset;
-    if (acao === 'marcar') update((s) => { s[chave][id] = el.checked; if (!el.checked) delete s[chave][id]; });
-    if (acao === 'relogio') update((s) => { s.relogio = el.checked; });
-    if (acao === 'monstro') update((s) => { s.monstros[id] = limitar(Math.floor(Number(el.value)), 0, 99999); });
-    if (acao === 'rapido') { filtroDe(colecaoAtual()).rapido = el.checked; render(); }
-  });
-
-  // ---------- Atualização ----------
-  function atualizar(s) {
-    const p = perfeicao(s);
-    hud.querySelector('[data-pct]').textContent = formatarPct(p, getIdioma());
-    hud.querySelector('[data-barra]').innerHTML = barraBlocos(p / 100, 25, 'ouro');
-    const fracoes = {};
-    CATEGORIAS.forEach((c) => {
-      const f = fracao(c, s);
-      fracoes[c.id] = f;
-      const slot = barra.querySelector(`[data-slot="${c.id}"]`);
-      if (!slot) return;
-      slot.querySelector('.enchimento').innerHTML = barraBlocos(f, 5, 'mini');
-      slot.classList.toggle('completo', f >= 1);
+  function setPips(group, id, value) {
+    update((state) => {
+      state[group][id] = (state[group][id] || 0) === value ? value - 1 : value;
     });
-    // Comemora categorias que acabaram de chegar a 100%
-    if (ultimasFracoes) {
-      CATEGORIAS.forEach((c) => {
-        if (fracoes[c.id] >= 1 && ultimasFracoes[c.id] < 1) {
-          comemorar(t('toast.categoria', { cat: t(`curto.${c.id}`) }));
-          barra.querySelector(`[data-slot="${c.id}"]`)?.classList.add('brilho');
-        }
-      });
+  }
+
+  function selectItem(collection, id) {
+    const filter = filterOf(collection);
+    if (filter.quick && !isReferenceOnly(collection)) {
+      toggleItem(collection, id);
+      return;
     }
-    ultimasFracoes = fracoes;
+    filter.selected = id;
     render();
   }
 
-  function status(chave) {
-    statusChave = chave;
-    const el = hud.querySelector('[data-status]');
-    if (el) el.textContent = t(chave);
+  const panelClickHandlers = {
+    close: closePanel,
+    back: goBack,
+    open: ({ value }) => openPanel(value, { stack: true }),
+    status: ({ value, collection }) => {
+      filterOf(collection).status = value;
+      render({ fromTop: true });
+    },
+    section: ({ value, collection }) => {
+      filterOf(collection).section = value || null;
+      render({ fromTop: true });
+    },
+    'status-walnuts': ({ value }) => {
+      filterOf('walnuts').status = value;
+      render();
+    },
+    item: ({ id, collection }) => selectItem(collection, id),
+    toggle: ({ id, collection }) => toggleItem(collection, id),
+    heart: ({ id, count }) => setPips('friends', id, count),
+    skill: ({ id, count }) => setPips('skills', id, count),
+  };
+
+  const panelChangeHandlers = {
+    mark: ({ element, id, key }) =>
+      update((state) => {
+        state[key][id] = element.checked;
+        if (!element.checked) {
+          delete state[key][id];
+        }
+      }),
+    clock: ({ element }) =>
+      update((state) => {
+        state.clock = element.checked;
+      }),
+    monster: ({ element, id }) =>
+      update((state) => {
+        state.monsters[id] = clamp(Math.floor(Number(element.value)), 0, MAX_KILL_COUNT);
+      }),
+    quick: ({ element }) => {
+      filterOf(currentCollection()).quick = element.checked;
+      render();
+    },
+  };
+
+  controls.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-action]');
+    if (!button) {
+      return;
+    }
+    const { action } = button.dataset;
+    if (action === 'config') {
+      openConfig();
+    } else {
+      scene[action]();
+    }
+  });
+
+  bar.addEventListener('click', (event) => {
+    const slot = event.target.closest('.slot');
+    if (slot) {
+      togglePanel(slot.dataset.slot);
+    }
+  });
+
+  window.addEventListener('keydown', (event) => {
+    if (event.target.matches(FOCUSABLE_INPUTS) || event.ctrlKey || event.metaKey || event.altKey || !byId('modal').hidden) {
+      return;
+    }
+    const slotIndex = SLOT_KEYS.indexOf(event.key);
+    if (slotIndex >= 0) {
+      togglePanel(SLOTS[slotIndex]);
+    }
+    if (event.key === 'Escape') {
+      closePanel();
+    }
+    if (event.key === '+') {
+      scene.zoomIn();
+    }
+    if (event.key === '_') {
+      scene.zoomOut();
+    }
+  });
+
+  document.addEventListener('pointerover', (event) => {
+    if (event.target === byId('scene')) {
+      return;
+    }
+    const element = event.target.closest?.('[data-hint]');
+    showHint(element ? element.dataset.hint : null, event.clientX, event.clientY);
+  });
+
+  document.addEventListener('pointerout', (event) => {
+    if (event.target.closest?.('[data-hint]')) {
+      showHint(null);
+    }
+  });
+
+  panel.addEventListener('click', (event) => {
+    const element = event.target.closest('[data-action]');
+    if (!element || CHANGE_ACTIONS.has(element.dataset.action)) {
+      return;
+    }
+    const { action, id, value, n } = element.dataset;
+    panelClickHandlers[action]?.({ id, value, count: Number(n), collection: currentCollection() });
+  });
+
+  panel.addEventListener('input', (event) => {
+    const element = event.target.closest('[data-action="search"]');
+    if (element) {
+      filterOf(currentCollection()).search = element.value;
+      render({ fromTop: true });
+    }
+  });
+
+  panel.addEventListener('change', (event) => {
+    const element = event.target.closest('[data-action]');
+    if (element) {
+      const { action, id, key } = element.dataset;
+      panelChangeHandlers[action]?.({ element, id, key });
+    }
+  });
+
+  function celebrateCompletedCategories(fractions) {
+    if (!lastFractions) {
+      return;
+    }
+    CATEGORIES.filter((category) => fractions[category.id] >= 1 && lastFractions[category.id] < 1).forEach((category) => {
+      celebrate(t('toast.category', { cat: t(`short.${category.id}`) }));
+      bar.querySelector(`[data-slot="${category.id}"]`)?.classList.add('glow');
+    });
   }
 
-  function aviso(texto) {
-    const el = document.createElement('div');
-    el.className = 'toast moldura-fina';
-    el.textContent = texto;
-    toasts.append(el);
-    setTimeout(() => el.remove(), 4200);
+  function refresh(state) {
+    const percent = perfectionPercent(state);
+    hud.querySelector('[data-pct]').textContent = formatPercent(percent, getLanguage());
+    hud.querySelector('[data-bar]').innerHTML = blockBarHtml(percent / 100, HUD_BAR_BLOCKS, 'gold');
+    const fractions = {};
+    CATEGORIES.forEach((category) => {
+      const fraction = completionFraction(category, state);
+      fractions[category.id] = fraction;
+      const slot = bar.querySelector(`[data-slot="${category.id}"]`);
+      if (slot) {
+        slot.querySelector('.fill').innerHTML = blockBarHtml(fraction, SLOT_BAR_BLOCKS, 'mini');
+        slot.classList.toggle('complete', fraction >= 1);
+      }
+    });
+    celebrateCompletedCategories(fractions);
+    lastFractions = fractions;
+    render();
   }
 
-  function comemorar(texto) {
-    const el = document.createElement('div');
-    el.className = 'toast conquista moldura-fina';
-    el.innerHTML = `<span class="toast-estrela">${icone('estrela')}</span><span><strong>${t('toast.objetivo')}</strong><br>${esc(texto)}</span>`;
-    toasts.append(el);
-    setTimeout(() => el.remove(), 5000);
+  function setStatus(key) {
+    statusKey = key;
+    const element = hud.querySelector('[data-status]');
+    if (element) {
+      element.textContent = t(key);
+    }
   }
 
-  function mostrarDica(texto, x, y) {
-    if (!texto) { dica.hidden = true; return; }
-    dica.textContent = texto;
-    dica.hidden = false;
-    const w = dica.offsetWidth;
-    dica.style.left = `${Math.min(x + 14, window.innerWidth - w - 8)}px`;
-    dica.style.top = `${y + 18}px`;
+  function showToast({ className, html, durationMs }) {
+    const element = document.createElement('div');
+    element.className = `toast ${className}`;
+    element.innerHTML = html;
+    toasts.append(element);
+    setTimeout(() => element.remove(), durationMs);
   }
 
-  montar();
+  function notice(text) {
+    showToast({ className: 'frame-thin', html: escapeHtml(text), durationMs: NOTICE_DURATION_MS });
+  }
+
+  function celebrate(text) {
+    showToast({
+      className: 'achievement frame-thin',
+      html: `<span class="toast-star">${pixelIcon('star')}</span><span><strong>${t('toast.goal')}</strong><br>${escapeHtml(text)}</span>`,
+      durationMs: ACHIEVEMENT_DURATION_MS,
+    });
+  }
+
+  function showHint(text, x, y) {
+    if (!text) {
+      hint.hidden = true;
+      return;
+    }
+    hint.textContent = text;
+    hint.hidden = false;
+    hint.style.left = `${Math.min(x + HINT_OFFSET.x, window.innerWidth - hint.offsetWidth - HINT_OFFSET.margin)}px`;
+    hint.style.top = `${y + HINT_OFFSET.y}px`;
+  }
+
+  mount();
+
   return {
-    abrir: (cat) => abrir(cat),
-    atualizar,
-    status,
-    aviso,
-    remontar: () => { montar(); render(); },
-    mostrarDicaCena: (cat, x, y) => mostrarDica(cat ? t(`curto.${cat}`) : null, x, y),
+    open: (categoryId) => openPanel(categoryId),
+    refresh,
+    status: setStatus,
+    notice,
+    remount: () => {
+      mount();
+      render();
+    },
+    showSceneHint: (categoryId, x, y) => showHint(categoryId ? t(`short.${categoryId}`) : null, x, y),
   };
 }
-
-export { SHEET };

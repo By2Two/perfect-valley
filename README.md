@@ -17,7 +17,7 @@ Abra http://localhost:5173. Sem configurar nada, dá para usar com **Continuar s
 - **Construções clicáveis**: cada uma abre uma categoria. Casa → amizades, caixa de envios → envios, bancada → criação, celeiro → culinária, lavoura → nível, lago → pesca, mina → monstros, obeliscos → obeliscos, Relógio de Ouro → relógio, palmeira → nozes douradas.
 - **Mundo vivo**: galinhas, vaca, porco, ovelha e cabra no cercado do celeiro; seis irrigadores que esguicham água e molham a terra; moinho girando, fumaça na chaminé, peixe pulando, borboletas, pássaros, vaga-lumes e postes acesos à noite.
 - **Estações**: primavera (pétalas), verão, outono (folhas caindo) e inverno (neve nos telhados e árvores, lago congelado). Escolha em Configurações.
-- **Hora do dia**: segue o relógio real ou fica fixa em dia, pôr do sol ou noite. Para testar, use `?hora=21` na URL. Os ponteiros do Relógio de Ouro mostram a mesma hora.
+- **Hora do dia**: segue o relógio real ou fica fixa em dia, pôr do sol ou noite. Para testar, use `?hour=21` na URL. Os ponteiros do Relógio de Ouro mostram a mesma hora.
 - **Progresso na fazenda**: obeliscos (Terra, Água, Deserto e Ilha, com portal girando) e o Relógio de Ouro aparecem quando marcados e ficam translúcidos enquanto não forem construídos; a lavoura cresce com o nível do fazendeiro.
 - **Animações desligadas**: em Configurações; tudo que se mexe para (também respeita a preferência de movimento reduzido do sistema).
 - **Coleções com ícones**: envios, culinária, criação e peixes em grade de inventário, com filtros, busca, seções e detalhes de cada item. Em **Mais coleções** ficam museu, armas e equipamentos, alfaiataria, itens especiais e livros, espantalhos raros e o bestiário.
@@ -50,27 +50,38 @@ python tools/extract_sheet.py caminho/da/planilha.xlsx
 
 ```
 src/
-  data.js          regras e pesos da Perfeição, cálculo e importação da planilha
+  catalog.js       categorias, pesos da Perfeição e coleções extras
+  items.js         busca de itens e ícones da planilha
+  progress.js      cálculo da Perfeição e importação da planilha
   data/sheet.json  itens, aldeões, metas e nozes extraídos da planilha
   data/pt.json     tradução dos textos da planilha para português
   store.js         progresso (navegador + nuvem) e preferências do dispositivo
-  i18n.js          textos em inglês e português
+  i18n.js          idioma atual e tradução dos termos
+  dictionary.js    textos da interface em inglês e português
+  glossary.js      termos da planilha traduzidos à mão
   firebase.js      Google, e-mail/senha e Firestore
   world/scene.js   renderização, câmera (zoom, arrastar, parallax), dia e noite
   world/farm.js    orquestra o mundo: luzes, partículas, estações e progresso
-  world/texturas.js texturas em pixel art desenhadas em canvas
+  world/textures.js texturas em pixel art desenhadas em canvas
   world/util.js    materiais, junção de geometrias, contorno e modo fantasma
-  world/assets/    casa, celeiro (animais), lavoura e irrigadores, mina,
-                   obeliscos, relógio e cenário (terreno, lago, cercas, árvores)
+  world/assets/    house, barn (animais), sprinklers (lavoura e irrigadores), mine,
+                   obelisks, clock e scenery (terreno, lago, cercas, árvores)
   ui/app.js        HUD, controles, barra de itens e painel
   ui/panels.js     telas de cada categoria e grade de coleção
-  ui/modais.js     boas-vindas, login e configurações
+  ui/modals.js     boas-vindas, login e configurações
   icons.js         ícones em pixel art desenhados em código
 public/
   icons/           ícones extraídos da planilha
-  ceu/nuvens.svg   nuvens do céu
+  sky/clouds.svg   nuvens do céu
 tools/
   extract_sheet.py extrator da planilha
+```
+
+## Qualidade
+
+```bash
+npm run lint
+npm test
 ```
 
 ## Arte

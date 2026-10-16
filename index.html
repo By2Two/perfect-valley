@@ -9,23 +9,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet" />
   </head>
-  <body data-estacao="spring">
-    <div id="ceu" aria-hidden="true">
-      <div class="estrelas"></div>
-      <div class="astro sol"></div>
-      <div class="astro lua"></div>
-      <div class="nuvens longe"></div>
-      <div class="nuvens perto"></div>
+  <body data-season="spring">
+    <div id="sky" aria-hidden="true">
+      <div class="stardrops"></div>
+      <div class="celestial sun"></div>
+      <div class="celestial moon"></div>
+      <div class="clouds far"></div>
+      <div class="clouds near"></div>
     </div>
-    <canvas id="cena" aria-label="Your farm. Click a building to open its category; drag to move, scroll to zoom."></canvas>
+    <canvas id="scene" aria-label="Your farm. Click a building to open its category; drag to move, scroll to zoom."></canvas>
     <div id="hud"></div>
-    <div id="controles" class="controles"></div>
-    <aside id="painel" hidden aria-live="polite"></aside>
-    <nav id="barra"></nav>
-    <div id="dica" hidden></div>
+    <div id="controls" class="controls"></div>
+    <aside id="panel" hidden aria-live="polite"></aside>
+    <nav id="bar"></nav>
+    <div id="hint" hidden></div>
     <div id="toasts" aria-live="polite"></div>
     <div id="modal" hidden></div>
-    <input type="file" id="arquivo" accept="application/json" hidden />
+    <input type="file" id="file" accept="application/json" hidden />
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

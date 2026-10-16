@@ -1,371 +1,60 @@
-// Textos da interface em inglês (padrão) e português.
-// Os nomes dos itens vêm da planilha e continuam em inglês; seções, estações e
-// termos curtos (clima, horário) são traduzidos pelo GLOSSARIO.
+import { DICTIONARY } from './dictionary.js';
+import { GLOSSARY, SEASON_WORDS } from './glossary.js';
 
-const DIC = {
-  en: {
-    'app.nome': 'Perfect Valley',
-    'app.sub': 'Track every step to 100% Perfection in Stardew Valley.',
-    'hud.perfeicao': 'Perfection',
-    'hud.local': 'Saved on this device',
-    'hud.nuvem': 'Saved to your account',
-    'hud.salvando': 'Saving…',
-    'hud.sincronizando': 'Syncing…',
-    'hud.offline': 'Offline. Saving on this device.',
-    'hud.falha': "Couldn't reach your account. Progress is safe on this device.",
-    'btn.aproximar': 'Zoom in',
-    'btn.afastar': 'Zoom out',
-    'btn.centralizar': 'Recenter view',
-    'btn.config': 'Settings',
-    'btn.fechar': 'Close',
-    'btn.voltar': 'Back',
-    'tecla': 'key {k}',
+const DEFAULT_LANGUAGE = 'en';
+const PORTUGUESE = 'pt';
+const DATED_TERM_PATTERN = /^(Spring|Summer|Fall|Winter) (\d+)$/;
+const SEASON_WORD_PATTERN = /\b(Spring|Summer|Fall|Winter|Also|Rainy|Sunny)\b/g;
+const TERM_SEPARATOR = ' · ';
+const HTML_LANGUAGES = { en: 'en', pt: 'pt-BR' };
 
-    'cat.shipping': 'Produce & Forage Shipped', 'curto.shipping': 'Shipping',
-    'cat.obelisks': 'Obelisks on Farm', 'curto.obelisks': 'Obelisks',
-    'cat.clock': 'Golden Clock', 'curto.clock': 'Clock',
-    'cat.monsters': 'Monster Slayer Hero', 'curto.monsters': 'Monsters',
-    'cat.friends': 'Great Friends', 'curto.friends': 'Friends',
-    'cat.level': 'Farmer Level', 'curto.level': 'Level',
-    'cat.stardrops': 'Stardrops Found', 'curto.stardrops': 'Stardrops',
-    'cat.cooking': 'Cooking Recipes Made', 'curto.cooking': 'Cooking',
-    'cat.crafting': 'Crafting Recipes Made', 'curto.crafting': 'Crafting',
-    'cat.fishing': 'Fish Caught', 'curto.fishing': 'Fish',
-    'cat.walnuts': 'Golden Walnuts Found', 'curto.walnuts': 'Walnuts',
-    'cat.extras': 'More Collections', 'curto.extras': 'Collections',
-    'col.museum': 'Museum', 'col.gear': 'Weapons & Gear', 'col.tailoring': 'Tailoring',
-    'col.powers': 'Special Items & Books', 'col.statues': 'Rarecrows & Statues', 'col.bestiary': 'Bestiary',
+let translations = null;
+let loadingTranslations = null;
+let language = DEFAULT_LANGUAGE;
+const translationListeners = new Set();
 
-    'dica.shipping': 'Ship at least one of every item in the Items Shipped tab of your collection.',
-    'dica.obelisks': "Built by the Wizard. Each one is a fast-travel totem you can use every day.",
-    'dica.clock': 'Built by the Wizard for 10,000,000g. Keeps fences from decaying and stops debris from spawning.',
-    'dica.monsters': "Adventurer's Guild eradication goals. Dangerous variants count too.",
-    'dica.friends': 'Max hearts with everyone. Marriage candidates only need 8 hearts unless you are dating them.',
-    'dica.level': 'Level 10 in every skill. Farmer level is the sum of your skills divided by 2.',
-    'dica.stardrops': 'Each Stardrop permanently raises your max energy.',
-    'dica.cooking': 'Cook every recipe at least once.',
-    'dica.crafting': 'Craft every recipe at least once. Turn on "Show advanced crafting info" in the game options to see what is missing.',
-    'dica.fishing': 'Catch every fish in the Fish tab, crab pot catches and legendaries included.',
-    'dica.walnuts': 'Every Golden Walnut on Ginger Island. Some spots give more than one.',
-    'dica.extras': "These don't count toward Perfection, but they're part of a complete farm.",
-
-    'painel.vale': 'Worth {p}% of Perfection',
-    'painel.progresso': '{a} of {b}',
-    'filtro.faltando': 'Missing',
-    'filtro.feitos': 'Done',
-    'filtro.todos': 'All',
-    'filtro.tudo': 'Everything',
-    'filtro.buscar': 'Search items',
-    'filtro.rapido': 'Quick check',
-    'filtro.rapidoDica': 'Click a slot to check or uncheck it',
-    'vazio.faltando': 'Nothing missing here. Nice work!',
-    'vazio.busca': 'No items match "{q}".',
-    'det.marcar': 'Mark as complete',
-    'det.desmarcar': 'Mark as missing',
-    'det.feito': 'Complete',
-    'det.faltando': 'Missing',
-    'det.notas': 'Notes',
-    'det.escolha': 'Pick an item to see where and how to get it.',
-    'det.semCheck': 'Reference only. Not tracked.',
-
-    'amigos.coracoes': '{n} of {m} hearts',
-    'amigos.aniversario': 'Birthday',
-    'amigos.ama': 'Loves',
-    'amigos.gosta': 'Likes',
-    'amigos.solteiro': 'Marriage candidate',
-    'nivel.titulo': 'Farmer level {n} of 25',
-    'nivel.n': 'Level {n}',
-    'skill.farming': 'Farming', 'skill.mining': 'Mining', 'skill.foraging': 'Foraging', 'skill.fishing': 'Fishing', 'skill.combat': 'Combat',
-    'monstros.recompensa': 'Reward',
-    'monstros.abatidos': '{n} slain',
-    'relogio.marcar': 'I built the Golden Clock',
-    'relogio.sub': 'It appears on your farm once checked.',
-    'nozes.pontos': '{n} walnut(s)',
-    'nozes.total': '{a} of {b} walnuts',
-
-    'toast.objetivo': 'Goal complete!',
-    'toast.categoria': '{cat} is done!',
-
-    'boas.titulo': 'Perfect Valley',
-    'boas.google': 'Continue with Google',
-    'boas.criar': 'Create account',
-    'boas.entrar': 'Sign in with email',
-    'boas.convidado': 'Continue without an account',
-    'boas.convidadoDica': 'Your progress stays on this device only.',
-    'boas.ou': 'or',
-    'boas.nome': 'Farmer name',
-    'boas.email': 'Email',
-    'boas.senha': 'Password',
-    'boas.senhaDica': 'At least 6 characters',
-    'boas.criarBtn': 'Create account',
-    'boas.entrarBtn': 'Sign in',
-    'boas.temConta': 'Already have an account? Sign in',
-    'boas.semConta': 'New here? Create an account',
-    'boas.esqueci': 'Forgot your password?',
-    'boas.linkEnviado': 'We sent a password reset link to {email}.',
-    'boas.semFirebase': "Accounts aren't set up yet. Add your Firebase keys to .env.local to enable them (see the README).",
-    'erro.auth/invalid-credential': 'Wrong email or password.',
-    'erro.auth/wrong-password': 'Wrong email or password.',
-    'erro.auth/user-not-found': 'No account with this email. Create one instead.',
-    'erro.auth/email-already-in-use': 'This email already has an account. Sign in instead.',
-    'erro.auth/weak-password': 'Use a password with at least 6 characters.',
-    'erro.auth/invalid-email': 'Check the email address.',
-    'erro.auth/too-many-requests': 'Too many attempts. Wait a minute and try again.',
-    'erro.auth/unauthorized-domain': 'This site is not authorized in Firebase. Add the domain under Authentication > Settings.',
-    'erro.padrao': 'Something went wrong. Try again.',
-
-    'cfg.titulo': 'Settings',
-    'cfg.idioma': 'Language',
-    'cfg.idiomaNota': '',
-    'cfg.estacao': 'Season on the farm',
-    'est.spring': 'Spring', 'est.summer': 'Summer', 'est.fall': 'Fall', 'est.winter': 'Winter',
-    'cfg.hora': 'Time of day',
-    'hora.auto': 'Real clock', 'hora.dia': 'Day', 'hora.tarde': 'Sunset', 'hora.noite': 'Night',
-    'cfg.animacoes': 'Animations',
-    'cfg.ligado': 'On', 'cfg.desligado': 'Off',
-    'cfg.conta': 'Account',
-    'cfg.conectado': 'Signed in as {nome}',
-    'cfg.local': 'Not signed in. Progress is saved on this device.',
-    'cfg.sair': 'Sign out',
-    'cfg.entrar': 'Sign in or create account',
-    'cfg.dados': 'Progress',
-    'cfg.importarPlanilha': 'Import checks from the spreadsheet',
-    'cfg.importarPlanilhaDica': 'Copies everything checked in your Completionist Checklist. Items already checked here stay checked.',
-    'cfg.baixar': 'Download backup',
-    'cfg.restaurar': 'Restore backup',
-    'cfg.apagar': 'Erase progress',
-    'cfg.apagarConfirma': 'Erase all progress? If you are signed in, this also erases it from your account.',
-    'msg.importado': 'Spreadsheet progress imported.',
-    'msg.restaurado': 'Backup restored.',
-    'msg.apagado': 'Progress erased.',
-    'msg.backupInvalido': "That file isn't a Perfect Valley backup.",
-    'msg.saiu': 'Signed out. Your progress is still on this device.',
-
-    'como.earth-obelisk': 'Wizard: 500,000g, 10 Iridium Bars, 10 Earth Crystals',
-    'como.water-obelisk': 'Wizard: 500,000g, 5 Iridium Bars, 10 Clams, 10 Coral',
-    'como.desert-obelisk': 'Wizard: 1,000,000g, 20 Iridium Bars, 10 Coconuts, 10 Cactus Fruit',
-    'como.island-obelisk': 'Wizard: 1,000,000g, 10 Iridium Bars, 10 Dragon Teeth, 10 Bananas',
-  },
-  pt: {
-    'app.nome': 'Vale Perfeito',
-    'app.sub': 'Acompanhe cada passo até 100% de Perfeição em Stardew Valley.',
-    'hud.perfeicao': 'Perfeição',
-    'hud.local': 'Salvo neste dispositivo',
-    'hud.nuvem': 'Salvo na sua conta',
-    'hud.salvando': 'Salvando…',
-    'hud.sincronizando': 'Sincronizando…',
-    'hud.offline': 'Sem conexão. Salvando neste dispositivo.',
-    'hud.falha': 'Não deu para acessar sua conta. O progresso está seguro neste dispositivo.',
-    'btn.aproximar': 'Aproximar',
-    'btn.afastar': 'Afastar',
-    'btn.centralizar': 'Centralizar a visão',
-    'btn.config': 'Configurações',
-    'btn.fechar': 'Fechar',
-    'btn.voltar': 'Voltar',
-    'tecla': 'tecla {k}',
-
-    'cat.shipping': 'Itens enviados (produção e coleta)', 'curto.shipping': 'Envios',
-    'cat.obelisks': 'Obeliscos na fazenda', 'curto.obelisks': 'Obeliscos',
-    'cat.clock': 'Relógio de Ouro', 'curto.clock': 'Relógio',
-    'cat.monsters': 'Herói Matador de Monstros', 'curto.monsters': 'Monstros',
-    'cat.friends': 'Grandes Amigos', 'curto.friends': 'Amizades',
-    'cat.level': 'Nível do fazendeiro', 'curto.level': 'Nível',
-    'cat.stardrops': 'Frutos Estelares encontrados', 'curto.stardrops': 'Frutos Estelares',
-    'cat.cooking': 'Receitas culinárias preparadas', 'curto.cooking': 'Culinária',
-    'cat.crafting': 'Receitas de criação feitas', 'curto.crafting': 'Criação',
-    'cat.fishing': 'Peixes pescados', 'curto.fishing': 'Peixes',
-    'cat.walnuts': 'Nozes douradas encontradas', 'curto.walnuts': 'Nozes',
-    'cat.extras': 'Mais coleções', 'curto.extras': 'Coleções',
-    'col.museum': 'Museu', 'col.gear': 'Armas e equipamentos', 'col.tailoring': 'Alfaiataria',
-    'col.powers': 'Itens especiais e livros', 'col.statues': 'Espantalhos raros e estátuas', 'col.bestiary': 'Bestiário',
-
-    'dica.shipping': 'Envie pelo menos um de cada item da aba Itens enviados da sua coleção.',
-    'dica.obelisks': 'Construídos pelo Mago. Cada um é um atalho de viagem que você pode usar todo dia.',
-    'dica.clock': 'Construído pelo Mago por 10.000.000g. Impede que cercas estraguem e que o mato apareça.',
-    'dica.monsters': 'Metas de erradicação da Guilda dos Aventureiros. Variantes perigosas também contam.',
-    'dica.friends': 'Corações no máximo com todo mundo. Candidatos a casamento só precisam de 8 corações se vocês não estiverem namorando.',
-    'dica.level': 'Nível 10 em todas as habilidades. O nível do fazendeiro é a soma delas dividida por 2.',
-    'dica.stardrops': 'Cada Fruto Estelar aumenta sua energia máxima para sempre.',
-    'dica.cooking': 'Prepare cada receita pelo menos uma vez.',
-    'dica.crafting': 'Faça cada receita pelo menos uma vez. Ative "Mostrar informações avançadas de criação" nas opções do jogo para ver o que falta.',
-    'dica.fishing': 'Pesque todos os peixes da aba Peixes, incluindo os do covo e os lendários.',
-    'dica.walnuts': 'Todas as nozes douradas da Ilha Gengibre. Alguns lugares dão mais de uma.',
-    'dica.extras': 'Estas não contam para a Perfeição, mas fazem parte de uma fazenda completa.',
-
-    'painel.vale': 'Vale {p}% da Perfeição',
-    'painel.progresso': '{a} de {b}',
-    'filtro.faltando': 'Faltando',
-    'filtro.feitos': 'Concluídos',
-    'filtro.todos': 'Todos',
-    'filtro.tudo': 'Tudo',
-    'filtro.buscar': 'Buscar itens',
-    'filtro.rapido': 'Marcação rápida',
-    'filtro.rapidoDica': 'Clique num espaço para marcar ou desmarcar',
-    'vazio.faltando': 'Nada faltando aqui. Mandou bem!',
-    'vazio.busca': 'Nenhum item corresponde a "{q}".',
-    'det.marcar': 'Marcar como concluído',
-    'det.desmarcar': 'Marcar como faltando',
-    'det.feito': 'Concluído',
-    'det.faltando': 'Faltando',
-    'det.notas': 'Observações',
-    'det.escolha': 'Escolha um item para ver onde e como conseguir.',
-    'det.semCheck': 'Só para consulta. Não conta progresso.',
-
-    'amigos.coracoes': '{n} de {m} corações',
-    'amigos.aniversario': 'Aniversário',
-    'amigos.ama': 'Adora',
-    'amigos.gosta': 'Gosta',
-    'amigos.solteiro': 'Candidato(a) a casamento',
-    'nivel.titulo': 'Nível do fazendeiro {n} de 25',
-    'nivel.n': 'Nível {n}',
-    'skill.farming': 'Cultivo', 'skill.mining': 'Mineração', 'skill.foraging': 'Coleta', 'skill.fishing': 'Pesca', 'skill.combat': 'Combate',
-    'monstros.recompensa': 'Recompensa',
-    'monstros.abatidos': '{n} derrotados',
-    'relogio.marcar': 'Construí o Relógio de Ouro',
-    'relogio.sub': 'Ele aparece na sua fazenda quando marcado.',
-    'nozes.pontos': '{n} noz(es)',
-    'nozes.total': '{a} de {b} nozes',
-
-    'toast.objetivo': 'Objetivo concluído!',
-    'toast.categoria': '{cat}: completo!',
-
-    'boas.titulo': 'Vale Perfeito',
-    'boas.google': 'Entrar com Google',
-    'boas.criar': 'Criar conta',
-    'boas.entrar': 'Entrar com e-mail',
-    'boas.convidado': 'Continuar sem conta',
-    'boas.convidadoDica': 'O progresso fica salvo só neste dispositivo.',
-    'boas.ou': 'ou',
-    'boas.nome': 'Nome do fazendeiro',
-    'boas.email': 'E-mail',
-    'boas.senha': 'Senha',
-    'boas.senhaDica': 'Pelo menos 6 caracteres',
-    'boas.criarBtn': 'Criar conta',
-    'boas.entrarBtn': 'Entrar',
-    'boas.temConta': 'Já tem conta? Entrar',
-    'boas.semConta': 'Novo por aqui? Criar conta',
-    'boas.esqueci': 'Esqueceu a senha?',
-    'boas.linkEnviado': 'Enviamos um link para redefinir a senha para {email}.',
-    'boas.semFirebase': 'As contas ainda não estão configuradas. Coloque as chaves do Firebase no .env.local para ativar (veja o README).',
-    'erro.auth/invalid-credential': 'E-mail ou senha incorretos.',
-    'erro.auth/wrong-password': 'E-mail ou senha incorretos.',
-    'erro.auth/user-not-found': 'Não existe conta com esse e-mail. Crie uma.',
-    'erro.auth/email-already-in-use': 'Esse e-mail já tem conta. Entre com ele.',
-    'erro.auth/weak-password': 'Use uma senha com pelo menos 6 caracteres.',
-    'erro.auth/invalid-email': 'Confira o endereço de e-mail.',
-    'erro.auth/too-many-requests': 'Muitas tentativas. Espere um minuto e tente de novo.',
-    'erro.auth/unauthorized-domain': 'Este site não está autorizado no Firebase. Adicione o domínio em Authentication > Configurações.',
-    'erro.padrao': 'Algo deu errado. Tente de novo.',
-
-    'cfg.titulo': 'Configurações',
-    'cfg.idioma': 'Idioma',
-    'cfg.idiomaNota': 'Os nomes dos itens continuam em inglês, como na planilha.',
-    'cfg.estacao': 'Estação na fazenda',
-    'est.spring': 'Primavera', 'est.summer': 'Verão', 'est.fall': 'Outono', 'est.winter': 'Inverno',
-    'cfg.hora': 'Hora do dia',
-    'hora.auto': 'Relógio real', 'hora.dia': 'Dia', 'hora.tarde': 'Pôr do sol', 'hora.noite': 'Noite',
-    'cfg.animacoes': 'Animações',
-    'cfg.ligado': 'Ligadas', 'cfg.desligado': 'Desligadas',
-    'cfg.conta': 'Conta',
-    'cfg.conectado': 'Conectado como {nome}',
-    'cfg.local': 'Sem conta. O progresso fica salvo neste dispositivo.',
-    'cfg.sair': 'Sair',
-    'cfg.entrar': 'Entrar ou criar conta',
-    'cfg.dados': 'Progresso',
-    'cfg.importarPlanilha': 'Importar marcações da planilha',
-    'cfg.importarPlanilhaDica': 'Copia tudo o que está marcado na sua Completionist Checklist. O que já está marcado aqui continua marcado.',
-    'cfg.baixar': 'Baixar backup',
-    'cfg.restaurar': 'Restaurar backup',
-    'cfg.apagar': 'Apagar progresso',
-    'cfg.apagarConfirma': 'Apagar todo o progresso? Se você estiver conectado, isso também apaga da sua conta.',
-    'msg.importado': 'Progresso da planilha importado.',
-    'msg.restaurado': 'Backup restaurado.',
-    'msg.apagado': 'Progresso apagado.',
-    'msg.backupInvalido': 'Esse arquivo não é um backup do Vale Perfeito.',
-    'msg.saiu': 'Você saiu. O progresso continua neste dispositivo.',
-
-    'nome.stardew-valley-fair': 'Feira de Stardew Valley', 'como.stardew-valley-fair': 'Compre com o Pierre por 2.000 fichas estrela',
-    'nome.the-mines': 'As Minas', 'como.the-mines': 'Andar 100',
-    'nome.marriage': 'Casamento', 'como.marriage': 'Alcance 12,5 corações com o cônjuge',
-    'nome.the-sewers': 'Os Esgotos', 'como.the-sewers': 'Compre do Krobus por 20.000g',
-    'nome.the-secret-woods': 'Floresta Secreta', 'como.the-secret-woods': 'Dê uma Sweet Gem Berry ao Old Master Cannoli',
-    'nome.master-angler': 'Mestre Pescador', 'como.master-angler': 'Pesque todos os peixes',
-    'nome.a-complete-collection': 'Uma Coleção Completa', 'como.a-complete-collection': 'Complete o Museu',
-    'nome.earth-obelisk': 'Obelisco da Terra', 'nome.water-obelisk': 'Obelisco da Água',
-    'nome.desert-obelisk': 'Obelisco do Deserto', 'nome.island-obelisk': 'Obelisco da Ilha',
-    'nome.slimes': 'Slimes', 'nome.void-spirits': 'Espíritos do Vazio', 'nome.bats': 'Morcegos', 'nome.skeletons': 'Esqueletos',
-    'nome.cave-insects': 'Insetos da caverna', 'nome.duggies': 'Duggies', 'nome.dust-sprites': 'Fadinhas de poeira',
-    'nome.rock-crabs': 'Caranguejos de pedra', 'nome.mummies': 'Múmias', 'nome.pepper-rex': 'Pepper Rex',
-    'nome.serpents': 'Serpentes', 'nome.magma-sprites': 'Fadinhas de magma',
-
-    'como.earth-obelisk': 'Mago: 500.000g, 10 barras de irídio, 10 cristais da terra',
-    'como.water-obelisk': 'Mago: 500.000g, 5 barras de irídio, 10 mariscos, 10 corais',
-    'como.desert-obelisk': 'Mago: 1.000.000g, 20 barras de irídio, 10 cocos, 10 frutos de cacto',
-    'como.island-obelisk': 'Mago: 1.000.000g, 10 barras de irídio, 10 dentes de dragão, 10 bananas',
-  },
-};
-
-const GLOSSARIO = {
-  Spring: 'Primavera', Summer: 'Verão', Fall: 'Outono', Winter: 'Inverno',
-  'All Seasons': 'Todas as estações', 'Year-Round': 'O ano todo', Foraging: 'Coleta', Crops: 'Plantações',
-  'Fruit Trees': 'Árvores frutíferas', 'Animal Products': 'Produtos animais', Artisan: 'Artesanato', Other: 'Outros',
-  Island: 'Ilha', Beach: 'Praia', Desert: 'Deserto', 'Secret Woods': 'Floresta Secreta', 'Mines and Smelting': 'Minas e fundição',
-  'Crab Pot': 'Covo', Legendary: 'Lendários', 'Night Market': 'Mercado Noturno',
-  'Minerals / Gems': 'Minerais e gemas', Artifacts: 'Artefatos', Weapons: 'Armas', Swords: 'Espadas', Daggers: 'Adagas',
-  Clubs: 'Clavas', Rings: 'Anéis', Footwear: 'Calçados', Trinkets: 'Bugigangas', Shirt: 'Camisas', Hats: 'Chapéus', Pants: 'Calças',
-  'Special Items & Powers': 'Itens e poderes especiais', Books: 'Livros', 'Interactive Statues': 'Estátuas interativas', Statue: 'Estátua',
-  'The Mines': 'As Minas', 'Skull Cavern': 'Caverna da Caveira', 'Dangerous Skull Cavern': 'Caverna da Caveira perigosa',
-  'Volcano Dungeon': 'Masmorra do Vulcão', 'Dangerous Mines': 'Minas perigosas', 'Quarry Mine': 'Mina da Pedreira',
-  'Mutant Bug Lair': 'Covil dos Insetos Mutantes', 'Island East': 'Leste da Ilha', 'Island West': 'Oeste da Ilha',
-  'Island North': 'Norte da Ilha', 'Island South/Southeast': 'Sul/Sudeste da Ilha', Volcano: 'Vulcão',
-  Location: 'Local', Time: 'Horário', 'Time/Season': 'Horário/estação', Weather: 'Clima', Notes: 'Observações', Season: 'Estação',
-  Ingredients: 'Ingredientes', 'Recipe Source': 'Onde aprender', Animal: 'Animal', Floors: 'Andares', Drops: 'Recompensas',
-  Use: 'Uso', Obtained: 'Como obter', Dyeable: 'Tingível', Source: 'Origem',
-  Any: 'Qualquer', Anytime: 'A qualquer hora', Rainy: 'Chuva', Sunny: 'Sol', Yes: 'Sim', No: 'Não',
-  Exploration: 'Exploração', Puzzle: 'Enigma', Harvesting: 'Colheita', 'Breaking Rocks': 'Quebrando pedras',
-  'Killing Monsters': 'Derrotando monstros', Digging: 'Escavando', Fishing: 'Pesca',
-  Dwarf: 'Anão', Wizard: 'Mago',
-};
-const PALAVRAS = { Spring: 'Primavera', Summer: 'Verão', Fall: 'Outono', Winter: 'Inverno', Also: 'Também', Rainy: 'Chuva', Sunny: 'Sol' };
-
-// Tradução dos textos da planilha (itens, detalhes, notas). Só é baixada quando o português é escolhido.
-let PT = null;
-let carregandoPT = null;
-const ouvintesTraducao = new Set();
-/** Avisa quando a tradução terminar de carregar (para redesenhar a interface). */
-export function aoCarregarTraducao(fn) {
-  ouvintesTraducao.add(fn);
+export function onTranslationLoaded(listener) {
+  translationListeners.add(listener);
 }
-function carregarTraducao() {
-  carregandoPT ??= import('./data/pt.json').then((m) => {
-    PT = m.default;
-    ouvintesTraducao.forEach((fn) => fn());
+
+function loadTranslations() {
+  loadingTranslations ??= import('./data/pt.json').then((module) => {
+    translations = module.default;
+    translationListeners.forEach((listener) => listener());
   });
-  return carregandoPT;
+  return loadingTranslations;
 }
 
-let idioma = 'en';
-export function setIdioma(l) {
-  idioma = l === 'pt' ? 'pt' : 'en';
-  document.documentElement.lang = idioma === 'pt' ? 'pt-BR' : 'en';
-  document.title = t('app.nome');
-  if (idioma === 'pt' && !PT) carregarTraducao();
-}
-export const getIdioma = () => idioma;
-
-export function t(chave, vars) {
-  let s = DIC[idioma][chave] ?? DIC.en[chave] ?? chave;
-  if (vars) s = s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
-  return s;
+export function setLanguage(requestedLanguage) {
+  language = requestedLanguage === PORTUGUESE ? PORTUGUESE : DEFAULT_LANGUAGE;
+  document.documentElement.lang = HTML_LANGUAGES[language];
+  document.title = t('app.name');
+  if (language === PORTUGUESE && !translations) {
+    loadTranslations();
+  }
 }
 
-/** Traduz termos da planilha (seções, rótulos, valores curtos) quando o idioma é português. */
-export function termo(txt) {
-  if (idioma !== 'pt' || !txt) return txt;
-  if (PT?.[txt]) return PT[txt];
-  if (GLOSSARIO[txt]) return GLOSSARIO[txt];
-  const data = txt.match(/^(Spring|Summer|Fall|Winter) (\d+)$/);
-  if (data) return `${data[2]} de ${PALAVRAS[data[1]].toLowerCase()}`;
-  if (txt.includes(' · ')) return txt.split(' · ').map(termo).join(' · ');
-  return txt.replace(/\b(Spring|Summer|Fall|Winter|Also|Rainy|Sunny)\b/g, (p) => PALAVRAS[p]);
+export const getLanguage = () => language;
+
+export function t(key, variables) {
+  const text = DICTIONARY[language][key] ?? DICTIONARY[DEFAULT_LANGUAGE][key] ?? key;
+  return variables ? text.replace(/\{(\w+)\}/g, (_, name) => variables[name] ?? '') : text;
+}
+
+export function translateTerm(term) {
+  if (language !== PORTUGUESE || !term) {
+    return term;
+  }
+  const translated = translations?.[term] ?? GLOSSARY[term];
+  if (translated) {
+    return translated;
+  }
+  const datedTerm = term.match(DATED_TERM_PATTERN);
+  if (datedTerm) {
+    return `${datedTerm[2]} de ${SEASON_WORDS[datedTerm[1]].toLowerCase()}`;
+  }
+  if (term.includes(TERM_SEPARATOR)) {
+    return term.split(TERM_SEPARATOR).map(translateTerm).join(TERM_SEPARATOR);
+  }
+  return term.replace(SEASON_WORD_PATTERN, (word) => SEASON_WORDS[word]);
 }

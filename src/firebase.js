@@ -1,10 +1,18 @@
 import { initializeApp } from 'firebase/app';
 import {
-  getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut,
-  createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile,
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged,
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile,
 } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 
+const PLAYERS_COLLECTION = 'jogadores';
 const env = import.meta.env;
 const config = {
   apiKey: env.VITE_FIREBASE_API_KEY,
@@ -13,39 +21,40 @@ const config = {
   appId: env.VITE_FIREBASE_APP_ID,
 };
 
-/** Sem as chaves no .env.local o app roda só no modo local. */
-export const firebaseAtivo = Boolean(config.apiKey && config.projectId);
+export const isFirebaseEnabled = Boolean(config.apiKey && config.projectId);
 
 let auth = null;
 let db = null;
-if (firebaseAtivo) {
+if (isFirebaseEnabled) {
   const app = initializeApp(config);
   auth = getAuth(app);
   db = getFirestore(app);
 }
 
-export function observarUsuario(cb) {
-  if (!firebaseAtivo) {
-    cb(null);
+export function observeUser(callback) {
+  if (!isFirebaseEnabled) {
+    callback(null);
     return () => {};
   }
-  return onAuthStateChanged(auth, cb);
+  return onAuthStateChanged(auth, callback);
 }
 
-export const entrarComGoogle = () => signInWithPopup(auth, new GoogleAuthProvider());
-export const entrarComEmail = (email, senha) => signInWithEmailAndPassword(auth, email, senha);
-export async function criarConta(nome, email, senha) {
-  const cred = await createUserWithEmailAndPassword(auth, email, senha);
-  if (nome) await updateProfile(cred.user, { displayName: nome });
-  return cred;
+export const signInWithGoogle = () => signInWithPopup(auth, new GoogleAuthProvider());
+export const signInWithEmail = (email, password) => signInWithEmailAndPassword(auth, email, password);
+export async function createAccount(name, email, password) {
+  const credential = await createUserWithEmailAndPassword(auth, email, password);
+  if (name) {
+    await updateProfile(credential.user, { displayName: name });
+  }
+  return credential;
 }
-export const recuperarSenha = (email) => sendPasswordResetEmail(auth, email);
-export const sair = () => signOut(auth);
+export const recoverPassword = (email) => sendPasswordResetEmail(auth, email);
+export const signOutUser = () => signOut(auth);
 
-export async function carregarNuvem(uid) {
-  const snap = await getDoc(doc(db, 'jogadores', uid));
+export async function loadCloudSave(uid) {
+  const snap = await getDoc(doc(db, PLAYERS_COLLECTION, uid));
   return snap.exists() ? snap.data().save : null;
 }
-export async function salvarNaNuvem(uid, save) {
-  await setDoc(doc(db, 'jogadores', uid), { save, atualizadoEm: save.atualizadoEm });
+export async function saveToCloud(uid, save) {
+  await setDoc(doc(db, PLAYERS_COLLECTION, uid), { save, updatedAt: save.updatedAt });
 }

@@ -1,10 +1,9 @@
 import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { vidro } from './texturas.js';
+import { glass } from './textures.js';
 
-export const COR_CONTORNO = 0x3b2410;
+export const OUTLINE_COLOR = 0x3b2410;
 
-/** UVs planares em unidades do mundo, escolhendo o eixo pela normal de cada vértice */
 function uvPlanar(geo) {
   const p = geo.attributes.position;
   const n = geo.attributes.normal;
@@ -34,193 +33,217 @@ function uvPlanar(geo) {
   geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
 }
 
-export function criarUtil(cena) {
-  const materiais = new Map();
-  const mat = (cor) => {
-    if (!materiais.has(cor)) materiais.set(cor, new THREE.MeshLambertMaterial({ color: cor }));
-    return materiais.get(cor);
+export function createWorldKit(scene) {
+  const materials = new Map();
+  const solidMaterial = (color) => {
+    if (!materials.has(color)) {
+      materials.set(color, new THREE.MeshLambertMaterial({ color }));
+    }
+    return materials.get(color);
   };
-  // Material único para peças de cor sólida (a cor vai em cada vértice)
-  const matCor = new THREE.MeshLambertMaterial({ vertexColors: true });
-  const matsTex = new Map();
-  /** Material com textura em pixel art (tingível pelas cores dos vértices) */
-  function matTex(textura) {
-    if (!matsTex.has(textura)) matsTex.set(textura, new THREE.MeshLambertMaterial({ map: textura, vertexColors: true }));
-    return matsTex.get(textura);
+  const materialByColor = new THREE.MeshLambertMaterial({ vertexColors: true });
+  const materialsTexture = new Map();
+  function materialTexture(texture) {
+    if (!materialsTexture.has(texture)) {
+      materialsTexture.set(texture, new THREE.MeshLambertMaterial({ map: texture, vertexColors: true }));
+    }
+    return materialsTexture.get(texture);
   }
 
-  // Vidro das janelas e lanternas, compartilhados por todas as construções (acendem à noite)
-  const janelaMat = new THREE.MeshLambertMaterial({ map: vidro(), color: 0x9fd0ee, emissive: 0x000000 });
-  const lanternaMat = new THREE.MeshLambertMaterial({ color: 0xfff2c0, emissive: 0x000000 });
-  function definirLuzJanelas(noite) {
-    janelaMat.emissive.setHex(noite ? 0xffb84a : 0x000000);
-    janelaMat.color.setHex(noite ? 0xffd36b : 0x9fd0ee);
-    lanternaMat.emissive.setHex(noite ? 0xffc870 : 0x000000);
+  const windowMaterial = new THREE.MeshLambertMaterial({ map: glass(), color: 0x9fd0ee, emissive: 0x000000 });
+  const lanternMaterial = new THREE.MeshLambertMaterial({ color: 0xfff2c0, emissive: 0x000000 });
+  function setWindowLights(night) {
+    windowMaterial.emissive.setHex(night ? 0xffb84a : 0x000000);
+    windowMaterial.color.setHex(night ? 0xffd36b : 0x9fd0ee);
+    lanternMaterial.emissive.setHex(night ? 0xffc870 : 0x000000);
   }
 
-  const geoCaixa = new THREE.BoxGeometry(1, 1, 1);
-  function caixa(w, h, d, material, x = 0, y = 0, z = 0) {
-    const m = new THREE.Mesh(geoCaixa, typeof material === 'number' ? mat(material) : material);
-    m.scale.set(w, h, d);
-    m.position.set(x, y + h / 2, z);
+  const geoBox = new THREE.BoxGeometry(1, 1, 1);
+  function box([width, height, depth], material, [x, y, z] = [0, 0, 0]) {
+    const m = new THREE.Mesh(geoBox, typeof material === 'number' ? solidMaterial(material) : material);
+    m.scale.set(width, height, depth);
+    m.position.set(x, y + height / 2, z);
     m.castShadow = true;
     m.receiveShadow = true;
     return m;
   }
-  function grupo(x, z, ...filhos) {
+  function group(x, z, ...children) {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
-    filhos.forEach((f) => g.add(f));
-    cena.add(g);
+    children.forEach((f) => g.add(f));
+    scene.add(g);
     return g;
   }
-  const clicaveis = [];
-  function clicavel(obj, cat) {
+  const clickables = [];
+  function clickable(obj, cat) {
     obj.userData.cat = cat;
-    clicaveis.push(obj);
+    clickables.push(obj);
   }
-  // Fantasma (ainda não construído): só as arestas principais em wireframe, sobre um preenchimento bem translúcido
-  const fantasmaMat = new THREE.MeshBasicMaterial({ color: 0xfff6dc, transparent: true, opacity: 0.1, depthWrite: false });
-  const arestaMat = new THREE.LineBasicMaterial({ color: 0xfff6dc, transparent: true, opacity: 0.45 });
-  function definirFantasma(obj, fantasma) {
-    const malhas = [];
-    obj.traverse((m) => { if (m.isMesh) malhas.push(m); });
-    malhas.forEach((m) => {
-      if (m.userData.semFantasma) return;
-      if (m.userData.contorno) {
-        m.visible = !fantasma;
+  const ghostMaterial = new THREE.MeshBasicMaterial({ color: 0xfff6dc, transparent: true, opacity: 0.1, depthWrite: false });
+  const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xfff6dc, transparent: true, opacity: 0.45 });
+  function setGhost(obj, ghost) {
+    const meshes = [];
+    obj.traverse((m) => {
+      if (m.isMesh) {
+        meshes.push(m);
+      }
+    });
+    meshes.forEach((m) => {
+      if (m.userData.withoutGhost) {
         return;
       }
-      if (fantasma && !m.userData.arestas) {
-        m.userData.arestas = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 30), arestaMat);
-        m.userData.arestas.raycast = () => {}; // o clique continua valendo pela malha
-        m.add(m.userData.arestas);
+      if (m.userData.outline) {
+        m.visible = !ghost;
+        return;
       }
-      if (m.userData.arestas) m.userData.arestas.visible = fantasma;
+      if (ghost && !m.userData.edges) {
+        m.userData.edges = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 30), edgeMaterial);
+        m.userData.edges.raycast = () => {};
+        m.add(m.userData.edges);
+      }
+      if (m.userData.edges) {
+        m.userData.edges.visible = ghost;
+      }
       m.userData.original ??= m.material;
-      m.material = fantasma ? fantasmaMat : m.userData.original;
-      m.castShadow = !fantasma;
+      m.material = ghost ? ghostMaterial : m.userData.original;
+      m.castShadow = !ghost;
     });
   }
-  const aleatorio = (() => {
+  const random = (() => {
     let s = 7;
     return () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
   })();
 
-  // ---------- Contorno de 1 pixel (casca invertida, empurrada em espaço de tela) ----------
-  const resolucao = { value: new THREE.Vector2(1, 1) };
-  const contornoMat = new THREE.MeshBasicMaterial({ color: COR_CONTORNO, side: THREE.BackSide });
-  contornoMat.onBeforeCompile = (s) => {
-    s.uniforms.uRes = resolucao;
-    s.vertexShader = `uniform vec2 uRes;\n${s.vertexShader}`.replace('#include <project_vertex>', `#include <project_vertex>
-      vec2 nTela = (projectionMatrix * vec4(normalMatrix * normal, 0.0)).xy * uRes;
-      if (dot(nTela, nTela) > 1e-8) gl_Position.xy += normalize(nTela) * 2.0 / uRes * gl_Position.w;`);
+  const resolution = { value: new THREE.Vector2(1, 1) };
+  const outlineMaterial = new THREE.MeshBasicMaterial({ color: OUTLINE_COLOR, side: THREE.BackSide });
+  outlineMaterial.onBeforeCompile = (s) => {
+    s.uniforms.uRes = resolution;
+    s.vertexShader = `uniform vec2 uRes;\n${s.vertexShader}`.replace(
+      '#include <project_vertex>',
+      `#include <project_vertex>
+      vec2 nScreen = (projectionMatrix * vec4(normalMatrix * normal, 0.0)).xy * uRes;
+      if (dot(nScreen, nScreen) > 1e-8) gl_Position.xy += normalize(nScreen) * 2.0 / uRes * gl_Position.w;`,
+    );
   };
-  const atualizarResolucao = (renderer) => renderer.getDrawingBufferSize(resolucao.value);
+  const refreshResolution = (renderer) => renderer.getDrawingBufferSize(resolution.value);
 
-  /**
-   * Junta peças estáticas que compartilham material numa única malha (menos draw calls).
-   * Peças de cor sólida usam `matCor` com a cor nos vértices.
-   */
-  function construtor() {
-    const porMat = new Map();
-    const casca = [];
+  function builder() {
+    const perMaterial = new Map();
+    const bark = [];
     const tmp = new THREE.Color();
 
-    /** opts: cor (tingimento), pos [x,y,z], rot (Euler ou Matrix4), contorno, uv (false mantém as UVs da geometria) */
-    function peca(geo, material, { cor = 0xffffff, pos, rot, contorno = false, uv = true } = {}) {
-      let g = geo.index ? geo.toNonIndexed() : geo.clone();
+    function piece(geo, material, { color = 0xffffff, position, rot, outline = false, uv = true } = {}) {
+      const g = geo.index ? geo.toNonIndexed() : geo.clone();
       g.clearGroups();
       if (rot) {
-        // UV no espaço da peça, para a textura acompanhar a inclinação (telhados)
-        if (uv) uvPlanar(g);
+        if (uv) {
+          uvPlanar(g);
+        }
         g.applyMatrix4(rot.isMatrix4 ? rot : new THREE.Matrix4().makeRotationFromEuler(rot));
-        if (pos) g.translate(...pos);
+        if (position) {
+          g.translate(...position);
+        }
       } else {
-        if (pos) g.translate(...pos);
-        if (uv) uvPlanar(g);
+        if (position) {
+          g.translate(...position);
+        }
+        if (uv) {
+          uvPlanar(g);
+        }
       }
-      const solida = typeof material === 'number';
-      tmp.set(solida ? material : cor);
-      const cores = new Float32Array(g.attributes.position.count * 3);
-      for (let i = 0; i < cores.length; i += 3) {
-        cores[i] = tmp.r;
-        cores[i + 1] = tmp.g;
-        cores[i + 2] = tmp.b;
+      const solid = typeof material === 'number';
+      tmp.set(solid ? material : color);
+      const colors = new Float32Array(g.attributes.position.count * 3);
+      for (let i = 0; i < colors.length; i += 3) {
+        colors[i] = tmp.r;
+        colors[i + 1] = tmp.g;
+        colors[i + 2] = tmp.b;
       }
-      g.setAttribute('color', new THREE.BufferAttribute(cores, 3));
-      const chave = solida ? matCor : material;
-      if (!porMat.has(chave)) porMat.set(chave, []);
-      porMat.get(chave).push(g);
-      if (contorno) {
+      g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const key = solid ? materialByColor : material;
+      if (!perMaterial.has(key)) {
+        perMaterial.set(key, []);
+      }
+      perMaterial.get(key).push(g);
+      if (outline) {
         let c = new THREE.BufferGeometry();
         c.setAttribute('position', g.attributes.position.clone());
         c = mergeVertices(c, 1e-4);
         c.computeVertexNormals();
-        casca.push(c);
+        bark.push(c);
       }
       return g;
     }
 
-    /** Caixa com a base em y (como `caixa`), cor sólida (número) ou material */
-    function cx(w, h, d, material, x = 0, y = 0, z = 0, opts = {}) {
-      return peca(new THREE.BoxGeometry(w, h, d), material, { ...opts, pos: [x, y + h / 2, z] });
+    function box([width, height, depth], material, { position: [x, y, z] = [0, 0, 0], ...options } = {}) {
+      return piece(new THREE.BoxGeometry(width, height, depth), material, { ...options, position: [x, y + height / 2, z] });
     }
 
-    /**
-     * Placa inclinada (água de telhado) entre o ponto baixo `a` e o alto `b`, dados como [h, y]
-     * no plano do perfil. `eixo` diz para onde a placa se estende ('x' ou 'z').
-     * `ext` = [beiral além de a, sobra além de b]; `sobre` afasta a placa da linha (neve).
-     */
-    function placa(a, b, material, { esp = 0.15, comp = 1, ext = [0, 0], centro = 0, eixo = 'x', sobre = 0, ...opts } = {}) {
-      const d = new THREE.Vector2(a[0] - b[0], a[1] - b[1]);
+    function slab([from, to], material, { thickness = 0.15, length = 1, extension = [0, 0], center = 0, axis = 'x', over = 0, ...options } = {}) {
+      const d = new THREE.Vector2(from[0] - to[0], from[1] - to[1]);
       const len = d.length();
       d.divideScalar(len);
       const n = new THREE.Vector2(-d.y, d.x);
-      if (n.y < 0) n.negate();
-      const total = len + ext[0] + ext[1];
-      const ini = new THREE.Vector2(b[0], b[1]).addScaledVector(d, -ext[1]);
-      const meio = ini.addScaledVector(d, total / 2).addScaledVector(n, esp / 2 + sobre);
+      if (n.y < 0) {
+        n.negate();
+      }
+      const total = len + extension[0] + extension[1];
+      const start = new THREE.Vector2(to[0], to[1]).addScaledVector(d, -extension[1]);
+      const middle = start.addScaledVector(d, total / 2).addScaledVector(n, thickness / 2 + over);
       let Y;
       let Z;
-      let pos;
-      if (eixo === 'x') {
+      let position;
+      if (axis === 'x') {
         Y = new THREE.Vector3(0, n.y, n.x);
         Z = new THREE.Vector3(0, d.y, d.x);
-        pos = [centro, meio.y, meio.x];
+        position = [center, middle.y, middle.x];
       } else {
         Y = new THREE.Vector3(n.x, n.y, 0);
         Z = new THREE.Vector3(d.x, d.y, 0);
-        pos = [meio.x, meio.y, centro];
+        position = [middle.x, middle.y, center];
       }
       const X = new THREE.Vector3().crossVectors(Y, Z).normalize();
-      return peca(new THREE.BoxGeometry(comp, esp, total), material, { ...opts, rot: new THREE.Matrix4().makeBasis(X, Y, Z), pos });
+      return piece(new THREE.BoxGeometry(length, thickness, total), material, { ...options, rot: new THREE.Matrix4().makeBasis(X, Y, Z), position });
     }
 
-    /** Cria as malhas finais dentro de `pai` */
-    function montar(pai, { sombra = true } = {}) {
-      const malhas = new Map();
-      porMat.forEach((geos, material) => {
+    function mount(parent, { shadow = true } = {}) {
+      const meshes = new Map();
+      perMaterial.forEach((geos, material) => {
         const m = new THREE.Mesh(mergeGeometries(geos), material);
-        m.castShadow = sombra;
+        m.castShadow = shadow;
         m.receiveShadow = true;
-        pai.add(m);
-        malhas.set(material, m);
+        parent.add(m);
+        meshes.set(material, m);
       });
-      if (casca.length) {
-        const c = new THREE.Mesh(mergeGeometries(casca), contornoMat);
-        c.userData.contorno = true;
-        c.onBeforeRender = atualizarResolucao;
-        pai.add(c);
+      if (bark.length) {
+        const c = new THREE.Mesh(mergeGeometries(bark), outlineMaterial);
+        c.userData.outline = true;
+        c.onBeforeRender = refreshResolution;
+        parent.add(c);
       }
-      return malhas;
+      return meshes;
     }
 
-    /** Só a geometria das peças de cor sólida, juntada (para usar em InstancedMesh) */
-    const juntar = () => mergeGeometries(porMat.get(matCor));
+    const join = () => mergeGeometries(perMaterial.get(materialByColor));
 
-    return { peca, cx, placa, montar, juntar };
+    return { piece, box, slab, mount, join };
   }
 
-  return { cena, mat, matCor, matTex, janelaMat, lanternaMat, definirLuzJanelas, geoCaixa, caixa, grupo, clicaveis, clicavel, definirFantasma, aleatorio, construtor };
+  return {
+    scene,
+    solidMaterial,
+    materialByColor,
+    materialTexture,
+    windowMaterial,
+    lanternMaterial,
+    setWindowLights,
+    geoBox,
+    box,
+    group,
+    clickables,
+    clickable,
+    setGhost,
+    random,
+    builder,
+  };
 }

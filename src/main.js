@@ -1,73 +1,77 @@
 import './style.css';
-import { setIdioma, aoCarregarTraducao } from './i18n.js';
+import { setLanguage, onTranslationLoaded } from './i18n.js';
 import { getState, subscribe, replaceState, setCloudSaver, getConfig, onConfig } from './store.js';
-import { criarCena } from './world/scene.js';
-import { criarApp } from './ui/app.js';
-import { criarModais } from './ui/modais.js';
-import { observarUsuario, carregarNuvem, salvarNaNuvem } from './firebase.js';
+import { createScene } from './world/scene.js';
+import { createApp } from './ui/app.js';
+import { createModals } from './ui/modals.js';
+import { observeUser, loadCloudSave, saveToCloud } from './firebase.js';
 
-setIdioma(getConfig().idioma);
+setLanguage(getConfig().language);
 
 let app = null;
-const cena = criarCena(document.getElementById('cena'), {
-  aoClicar: (cat) => app?.abrir(cat),
-  aoPassar: (cat, x, y) => app?.mostrarDicaCena(cat, x, y),
+const scene = createScene(document.getElementById('scene'), {
+  onClick: (cat) => app?.open(cat),
+  onHover: (cat, x, y) => app?.showSceneHint(cat, x, y),
 });
-const modais = criarModais({ aviso: (m) => app?.aviso(m) });
-app = criarApp({ cena, abrirConfig: modais.abrirConfig });
+const modals = createModals({ notice: (m) => app?.notice(m) });
+app = createApp({ scene, openConfig: modals.openConfig });
 
-// Preferências deste dispositivo (idioma, estação, hora, animações)
-let idiomaAtual = getConfig().idioma;
-function aplicarConfig(c) {
-  setIdioma(c.idioma);
-  cena.definirEstacao(c.estacao);
-  cena.definirHora(c.hora);
-  cena.definirAnimacoes(c.animacoes);
-  document.body.dataset.estacao = c.estacao;
-  document.body.classList.toggle('sem-animacao', !c.animacoes);
+let currentLanguage = getConfig().language;
+function applyConfig(c) {
+  setLanguage(c.language);
+  scene.setSeason(c.season);
+  scene.setHour(c.hour);
+  scene.setAnimations(c.animations);
+  document.body.dataset.season = c.season;
+  document.body.classList.toggle('without-animation', !c.animations);
 }
 onConfig((c) => {
-  aplicarConfig(c);
-  if (c.idioma !== idiomaAtual) {
-    idiomaAtual = c.idioma;
-    app.remontar();
+  applyConfig(c);
+  if (c.language !== currentLanguage) {
+    currentLanguage = c.language;
+    app.remount();
   }
-  modais.rerender();
+  modals.rerender();
 });
-aplicarConfig(getConfig());
-// Os textos da planilha em português chegam depois: redesenha quando estiverem prontos
-aoCarregarTraducao(() => {
-  app.remontar();
-  modais.rerender();
+applyConfig(getConfig());
+onTranslationLoaded(() => {
+  app.remount();
+  modals.rerender();
 });
 
 subscribe((s) => {
-  cena.atualizar(s);
-  app.atualizar(s);
+  scene.refresh(s);
+  app.refresh(s);
 });
-cena.atualizar(getState());
+scene.refresh(getState());
 
-if (!getConfig().entrada) modais.abrirBoas();
+if (!getConfig().entry) {
+  modals.openWelcome();
+}
 
-// Conta: vale o save mais recente (dispositivo ou nuvem)
-observarUsuario(async (usuario) => {
+observeUser(async (user) => {
   setCloudSaver(null);
-  modais.definirUsuario(usuario);
-  if (!usuario) {
+  modals.setUser(user);
+  if (!user) {
     app.status('hud.local');
     return;
   }
-  app.status('hud.sincronizando');
+  app.status('hud.syncing');
   try {
-    const nuvem = await carregarNuvem(usuario.uid);
+    const cloud = await loadCloudSave(user.uid);
     const local = getState();
-    if (nuvem && (nuvem.atualizadoEm || 0) > (local.atualizadoEm || 0)) replaceState(nuvem, { nuvem: false });
-    else await salvarNaNuvem(usuario.uid, local);
+    if (cloud && (cloud.updatedAt || 0) > (local.updatedAt || 0)) {
+      replaceState(cloud, { cloud: false });
+    } else {
+      await saveToCloud(user.uid, local);
+    }
     setCloudSaver((s) => {
-      app.status('hud.salvando');
-      salvarNaNuvem(usuario.uid, s).then(() => app.status('hud.nuvem')).catch(() => app.status('hud.falha'));
+      app.status('hud.saving');
+      saveToCloud(user.uid, s)
+        .then(() => app.status('hud.cloud'))
+        .catch(() => app.status('hud.failure'));
     });
-    app.status('hud.nuvem');
+    app.status('hud.cloud');
   } catch {
     app.status('hud.offline');
   }

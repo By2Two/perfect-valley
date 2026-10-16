@@ -1,252 +1,391 @@
-import {
-  SHEET, CATEGORIAS, SKILLS, ICONE_EXTRAS, COLECOES_EXTRAS, TOTAL_NOZES,
-  concluidos, totalDe, fracao, nivelFazendeiro, coracoesNecessarios, contarColecao, itemPorNome, iconeUrl,
-} from '../data.js';
-import { t, termo } from '../i18n.js';
-import { icone } from '../icons.js';
-import { esc, htmlIcone, barraBlocos } from './util.js';
+import { SHEET, CATEGORIES, SKILLS, EXTRA_COLLECTION_ICONS, EXTRA_COLLECTIONS } from '../catalog.js';
+import { findItemByName, iconUrl } from '../items.js';
+import { completedCount, totalOf, completionFraction, farmerLevel, requiredHearts, countCollected } from '../progress.js';
+import { t, translateTerm } from '../i18n.js';
+import { pixelIcon } from '../icons.js';
+import { escapeHtml, iconHtml, blockBarHtml } from './util.js';
 
-const CORACAO_VAZIO = { r: '#e8c98d', k: '#8a5a2b' };
+const COLLECTION_PANEL_PREFIX = 'collection:';
+const REFERENCE_ONLY_COLLECTION = 'bestiary';
+const EMPTY_HEART_COLORS = { r: '#e8c98d', k: '#8a5a2b' };
+const MAX_HEARTS = 10;
+const MAX_SKILL_LEVEL = 10;
+const PROGRESS_BAR_BLOCKS = 24;
+const MINI_BAR_BLOCKS = 10;
 
-// Filtros de cada coleção (ficam guardados enquanto a página estiver aberta)
-const filtros = {};
-export function filtroDe(col) {
-  filtros[col] ??= { status: 'todos', secao: null, busca: '', sel: null, rapido: false };
-  return filtros[col];
+const filters = {};
+
+export function filterOf(collection) {
+  filters[collection] ??= { status: 'all', section: null, search: '', selected: null, quick: false };
+  return filters[collection];
 }
 
-function topo(def, titulo, linhas, f, voltar = false) {
+export const collectionPanelId = (collection) => `${COLLECTION_PANEL_PREFIX}${collection}`;
+
+export const collectionOfPanel = (panelId) => (panelId?.startsWith(COLLECTION_PANEL_PREFIX) ? panelId.slice(COLLECTION_PANEL_PREFIX.length) : null);
+
+export const isReferenceOnly = (collection) => collection === REFERENCE_ONLY_COLLECTION;
+
+const progressText = (done, total) => t('panel.progress', { a: done, b: total });
+
+function headerHtml({ icon, title, lines, fraction, hasBackButton = false }) {
+  const backButton = hasBackButton
+    ? `<button class="button square small" data-action="back" data-focus="back" aria-label="${t('btn.back')}">‹</button>`
+    : '';
+  const progressBar = fraction === undefined ? '' : `<div class="panel-bar">${blockBarHtml(fraction, PROGRESS_BAR_BLOCKS)}</div>`;
   return `
-    <header class="painel-topo">
-      ${voltar ? `<button class="botao quadrado pequeno" data-acao="voltar" data-foco="voltar" aria-label="${t('btn.voltar')}">‹</button>` : ''}
-      <div class="painel-icone">${htmlIcone(def)}</div>
-      <div class="painel-titulos"><h2>${esc(titulo)}</h2>${linhas.map((l) => `<p>${l}</p>`).join('')}</div>
-      <button class="fechar" data-acao="fechar" data-foco="fechar" aria-label="${t('btn.fechar')}">✕</button>
+    <header class="panel-top">
+      ${backButton}
+      <div class="panel-icon">${iconHtml(icon)}</div>
+      <div class="panel-titles"><h2>${escapeHtml(title)}</h2>${lines.map((line) => `<p>${line}</p>`).join('')}</div>
+      <button class="close" data-action="close" data-focus="close" aria-label="${t('btn.close')}">✕</button>
     </header>
-    ${f === undefined ? '' : `<div class="painel-barra">${barraBlocos(f, 24)}</div>`}`;
+    ${progressBar}`;
 }
 
-export function htmlPainel(aberto, s) {
-  if (aberto === 'extras') return painelExtras(s);
-  if (aberto.startsWith('col:')) {
-    const col = aberto.slice(4);
-    const semCheck = col === 'bestiary';
-    const total = SHEET.colecoes[col].length;
-    const feitos = contarColecao(s, col);
-    return topo(ICONE_EXTRAS[col], t(`col.${col}`), semCheck ? [t('det.semCheck')] : [t('painel.progresso', { a: feitos, b: total })],
-      semCheck ? undefined : feitos / total, true) + corpoColecao(col, s, semCheck);
+function categoryProgressLine(category, state) {
+  if (category.kind === 'single') {
+    return '';
   }
-  const cat = CATEGORIAS.find((c) => c.id === aberto);
-  const linhas = [
-    t('painel.vale', { p: cat.peso }),
-    cat.tipo === 'unico' ? '' : cat.tipo === 'nozes'
-      ? t('nozes.total', { a: concluidos(cat, s), b: totalDe(cat) })
-      : t('painel.progresso', { a: concluidos(cat, s), b: totalDe(cat) }),
-  ].filter(Boolean);
-  const corpos = { colecao: () => corpoColecao(cat.colecao, s), lista: () => corpoLista(cat, s), unico: () => corpoRelogio(s),
-    metas: () => corpoMetas(s), aldeoes: () => corpoAldeoes(s), habilidades: () => corpoHabilidades(s), nozes: () => corpoNozes(s) };
-  const dica = `<p class="texto-dica">${t(`dica.${cat.id}`)}</p>`;
-  if (cat.tipo === 'colecao') return topo(cat.icone, t(`cat.${cat.id}`), linhas, fracao(cat, s)) + corpos.colecao();
-  return `${topo(cat.icone, t(`cat.${cat.id}`), linhas, fracao(cat, s))}<div class="corpo">${dica}${corpos[cat.tipo]()}</div>`;
+  const done = completedCount(category, state);
+  const total = totalOf(category);
+  return category.kind === 'walnuts' ? t('walnuts.total', { a: done, b: total }) : progressText(done, total);
 }
 
-// ---------- Coleções em grade de inventário ----------
-function corpoColecao(col, s, semCheck = false) {
-  const f = filtroDe(col);
-  const itens = SHEET.colecoes[col];
-  const marcados = s.itens[col] || {};
-  const secoes = [...new Set(itens.map((i) => i.secao).filter(Boolean))];
-  const busca = f.busca.trim().toLowerCase();
-  const visiveis = itens.filter((it) => {
-    if (f.secao && it.secao !== f.secao) return false;
-    if (!semCheck && f.status === 'faltando' && marcados[it.id]) return false;
-    if (!semCheck && f.status === 'feitos' && !marcados[it.id]) return false;
-    if (busca && !it.nome.toLowerCase().includes(busca) && !termo(it.nome).toLowerCase().includes(busca)) return false;
-    return true;
+function extraCollectionPanel(collection, state) {
+  const referenceOnly = isReferenceOnly(collection);
+  const total = SHEET.collections[collection].length;
+  const done = countCollected(state, collection);
+  const header = headerHtml({
+    icon: EXTRA_COLLECTION_ICONS[collection],
+    title: t(`collection.${collection}`),
+    lines: [referenceOnly ? t('detail.withoutCheck') : progressText(done, total)],
+    fraction: referenceOnly ? undefined : done / total,
+    hasBackButton: true,
   });
-  const sel = itens.find((i) => i.id === f.sel);
+  return header + collectionBody(collection, state);
+}
 
-  const status = semCheck ? '' : `
-    <div class="segmentado" role="group">
-      ${['faltando', 'feitos', 'todos'].map((k) => `<button class="seg" data-acao="status" data-valor="${k}" data-foco="st-${k}" aria-pressed="${f.status === k}">${t(`filtro.${k}`)}</button>`).join('')}
-    </div>`;
-  const rapido = semCheck ? '' : `
-    <label class="interruptor" title="${t('filtro.rapidoDica')}">
-      <input type="checkbox" class="caixa" data-acao="rapido" data-foco="rapido" ${f.rapido ? 'checked' : ''}> ${t('filtro.rapido')}
-    </label>`;
-  const chips = secoes.length > 1 ? `
-    <div class="chips" role="group">
-      <button class="chip" data-acao="secao" data-valor="" data-foco="sec-todas" aria-pressed="${!f.secao}">${t('filtro.tudo')}</button>
-      ${secoes.map((sec, i) => `<button class="chip" data-acao="secao" data-valor="${esc(sec)}" data-foco="sec-${i}" aria-pressed="${f.secao === sec}">${esc(termo(sec))}</button>`).join('')}
-    </div>` : '';
-
-  let grade;
-  if (!visiveis.length) {
-    grade = `<p class="vazio">${busca ? t('vazio.busca', { q: esc(f.busca) }) : t('vazio.faltando')}</p>`;
-  } else {
-    grade = `<div class="grade">${visiveis.map((it) => {
-      const ok = semCheck || marcados[it.id];
-      return `<button class="slot-item${ok ? ' feito' : ''}${f.sel === it.id ? ' selecionado' : ''}" data-acao="item" data-id="${it.id}"
-        data-foco="it-${it.id}" data-dica="${esc(termo(it.nome))}" aria-label="${esc(termo(it.nome))}${semCheck ? '' : `: ${ok ? t('det.feito') : t('det.faltando')}`}">
-        <img src="${iconeUrl(it.icone)}" alt="" loading="lazy" draggable="false">${!semCheck && ok ? '<span class="visto" aria-hidden="true"></span>' : ''}</button>`;
-    }).join('')}</div>`;
+function categoryPanel(category, state) {
+  const header = headerHtml({
+    icon: category.icon,
+    title: t(`cat.${category.id}`),
+    lines: [t('panel.vale', { p: category.weight }), categoryProgressLine(category, state)].filter(Boolean),
+    fraction: completionFraction(category, state),
+  });
+  if (category.kind === 'collection') {
+    return header + collectionBody(category.collection, state);
   }
-
-  return `
-    <div class="ferramentas">
-      ${status}
-      <label class="busca"><span class="sr">${t('filtro.buscar')}</span>
-        <input type="search" placeholder="${t('filtro.buscar')}" value="${esc(f.busca)}" data-acao="busca" data-foco="busca"></label>
-      ${rapido}
-    </div>
-    ${chips}
-    ${detalheItem(col, sel, marcados, semCheck)}
-    <div class="corpo">${grade}</div>`;
+  const bodies = {
+    list: () => listBody(category, state),
+    single: () => clockBody(state),
+    goals: () => goalsBody(state),
+    villagers: () => villagersBody(state),
+    skills: () => skillsBody(state),
+    walnuts: () => walnutsBody(state),
+  };
+  return `${header}<div class="body"><p class="text-hint">${t(`hint.${category.id}`)}</p>${bodies[category.kind]()}</div>`;
 }
 
-function detalheItem(col, it, marcados, semCheck) {
-  if (!it) return `<div class="detalhe vazio-detalhe"><p>${t('det.escolha')}</p></div>`;
-  const ok = semCheck || marcados[it.id];
-  const linhas = (it.detalhes || []).map(([k, v]) => `<dt>${esc(termo(k.replace(/\s*\(.*\)$/, '')))}</dt><dd>${esc(termo(v))}</dd>`).join('');
+export function panelHtml(panelId, state) {
+  if (panelId === 'extras') {
+    return extrasPanel(state);
+  }
+  const collection = collectionOfPanel(panelId);
+  if (collection) {
+    return extraCollectionPanel(collection, state);
+  }
+  return categoryPanel(
+    CATEGORIES.find((category) => category.id === panelId),
+    state,
+  );
+}
+
+function isItemVisible(item, { filter, checked, referenceOnly }) {
+  if (filter.section && item.section !== filter.section) {
+    return false;
+  }
+  if (!referenceOnly && filter.status === 'missing' && checked[item.id]) {
+    return false;
+  }
+  if (!referenceOnly && filter.status === 'done' && !checked[item.id]) {
+    return false;
+  }
+  const search = filter.search.trim().toLowerCase();
+  return !search || item.name.toLowerCase().includes(search) || translateTerm(item.name).toLowerCase().includes(search);
+}
+
+function statusFilterHtml(filter) {
+  const buttons = ['missing', 'done', 'all']
+    .map(
+      (status) =>
+        `<button class="seg" data-action="status" data-value="${status}" data-focus="st-${status}" aria-pressed="${filter.status === status}">${t(`filter.${status}`)}</button>`,
+    )
+    .join('');
+  return `<div class="segmented" role="group">${buttons}</div>`;
+}
+
+function quickFilterHtml(filter) {
   return `
-    <div class="detalhe${ok ? ' feito' : ''}">
-      <div class="detalhe-icone"><img src="${iconeUrl(it.icone)}" alt=""></div>
-      <div class="detalhe-texto">
-        <h3>${esc(termo(it.nome))}</h3>
-        ${it.secao ? `<p class="detalhe-secao">${esc(termo(it.secao))}</p>` : ''}
-        ${linhas ? `<dl>${linhas}</dl>` : ''}
-        ${it.nota ? `<details><summary>${t('det.notas')}</summary><p class="nota">${esc(termo(it.nota))}</p></details>` : ''}
-      </div>
-      ${semCheck ? '' : `<button class="botao ${ok ? 'secundario' : 'primario'}" data-acao="alternar" data-id="${it.id}" data-foco="alternar">
-        ${ok ? t('det.desmarcar') : t('det.marcar')}</button>`}
+    <label class="switch" title="${t('filter.quickHint')}">
+      <input type="checkbox" class="box" data-action="quick" data-focus="quick" ${filter.quick ? 'checked' : ''}> ${t('filter.quick')}
+    </label>`;
+}
+
+function sectionChipsHtml(sections, filter) {
+  if (sections.length <= 1) {
+    return '';
+  }
+  const chips = sections
+    .map(
+      (section, index) =>
+        `<button class="chip" data-action="section" data-value="${escapeHtml(section)}" data-focus="section-${index}" aria-pressed="${filter.section === section}">${escapeHtml(translateTerm(section))}</button>`,
+    )
+    .join('');
+  return `
+    <div class="chips" role="group">
+      <button class="chip" data-action="section" data-value="" data-focus="section-all" aria-pressed="${!filter.section}">${t('filter.everything')}</button>
+      ${chips}
     </div>`;
 }
 
-// ---------- Listas simples ----------
-const nomeTraduzido = (chave, padrao) => {
-  const v = t(chave);
-  return v === chave ? termo(padrao) : v;
+function itemSlotHtml(item, { isSelected, isDone, referenceOnly }) {
+  const name = escapeHtml(translateTerm(item.name));
+  const stateLabel = referenceOnly ? '' : `: ${isDone ? t('detail.done') : t('detail.missing')}`;
+  const seenMark = !referenceOnly && isDone ? '<span class="seen" aria-hidden="true"></span>' : '';
+  return `<button class="slot-item${isDone ? ' done' : ''}${isSelected ? ' selected' : ''}" data-action="item" data-id="${item.id}"
+        data-focus="it-${item.id}" data-hint="${name}" aria-label="${name}${stateLabel}">
+        <img src="${iconUrl(item.icon)}" alt="" loading="lazy" draggable="false">${seenMark}</button>`;
+}
+
+function itemGridHtml(visibleItems, { filter, checked, referenceOnly }) {
+  if (!visibleItems.length) {
+    const message = filter.search.trim() ? t('empty.search', { q: escapeHtml(filter.search) }) : t('empty.missing');
+    return `<p class="empty">${message}</p>`;
+  }
+  const slots = visibleItems
+    .map((item) => itemSlotHtml(item, { isSelected: filter.selected === item.id, isDone: referenceOnly || checked[item.id], referenceOnly }))
+    .join('');
+  return `<div class="grid">${slots}</div>`;
+}
+
+function collectionBody(collection, state) {
+  const referenceOnly = isReferenceOnly(collection);
+  const filter = filterOf(collection);
+  const items = SHEET.collections[collection];
+  const checked = state.items[collection] || {};
+  const sections = [...new Set(items.map((item) => item.section).filter(Boolean))];
+  const filterContext = { filter, checked, referenceOnly };
+  const visibleItems = items.filter((item) => isItemVisible(item, filterContext));
+  const selectedItem = items.find((item) => item.id === filter.selected);
+
+  return `
+    <div class="tools">
+      ${referenceOnly ? '' : statusFilterHtml(filter)}
+      <label class="search"><span class="sr">${t('filter.search')}</span>
+        <input type="search" placeholder="${t('filter.search')}" value="${escapeHtml(filter.search)}" data-action="search" data-focus="search"></label>
+      ${referenceOnly ? '' : quickFilterHtml(filter)}
+    </div>
+    ${sectionChipsHtml(sections, filter)}
+    ${itemDetail(selectedItem, checked, referenceOnly)}
+    <div class="body">${itemGridHtml(visibleItems, filterContext)}</div>`;
+}
+
+function itemDetail(item, checked, referenceOnly) {
+  if (!item) {
+    return `<div class="detail empty-detail"><p>${t('detail.choice')}</p></div>`;
+  }
+  const isDone = referenceOnly || checked[item.id];
+  const details = (item.details || [])
+    .map(([label, value]) => `<dt>${escapeHtml(translateTerm(label.replace(/\s*\(.*\)$/, '')))}</dt><dd>${escapeHtml(translateTerm(value))}</dd>`)
+    .join('');
+  const toggleButton = referenceOnly
+    ? ''
+    : `<button class="button ${isDone ? 'secondary' : 'primary'}" data-action="toggle" data-id="${item.id}" data-focus="toggle">
+        ${isDone ? t('detail.unmark') : t('detail.mark')}</button>`;
+  return `
+    <div class="detail${isDone ? ' done' : ''}">
+      <div class="detail-icon"><img src="${iconUrl(item.icon)}" alt=""></div>
+      <div class="detail-text">
+        <h3>${escapeHtml(translateTerm(item.name))}</h3>
+        ${item.section ? `<p class="detail-section">${escapeHtml(translateTerm(item.section))}</p>` : ''}
+        ${details ? `<dl>${details}</dl>` : ''}
+        ${item.note ? `<details><summary>${t('detail.notes')}</summary><p class="note">${escapeHtml(translateTerm(item.note))}</p></details>` : ''}
+      </div>
+      ${toggleButton}
+    </div>`;
+}
+
+const translatedName = (key, fallback) => {
+  const translation = t(key);
+  return translation === key ? translateTerm(fallback) : translation;
 };
 
-function corpoLista(cat, s) {
-  return `<ul class="lista">${cat.itens.map((it) => {
-    const ok = Boolean(s[cat.chave][it.id]);
-    const como = nomeTraduzido(`como.${it.id}`, it.como || '');
-    return `<li><label class="linha${ok ? ' feito' : ''}">
-      <input type="checkbox" class="caixa" data-acao="marcar" data-chave="${cat.chave}" data-id="${it.id}" data-foco="m-${it.id}" ${ok ? 'checked' : ''}>
-      <span class="linha-texto"><strong>${esc(nomeTraduzido(`nome.${it.id}`, it.nome))}</strong>${como ? `<small>${esc(como)}</small>` : ''}</span>
+function listBody(category, state) {
+  const rows = category.items
+    .map((item) => {
+      const isDone = Boolean(state[category.key][item.id]);
+      const source = translatedName(`source.${item.id}`, item.source || '');
+      return `<li><label class="line${isDone ? ' done' : ''}">
+      <input type="checkbox" class="box" data-action="mark" data-key="${category.key}" data-id="${item.id}" data-focus="m-${item.id}" ${isDone ? 'checked' : ''}>
+      <span class="line-text"><strong>${escapeHtml(translatedName(`name.${item.id}`, item.name))}</strong>${source ? `<small>${escapeHtml(source)}</small>` : ''}</span>
     </label></li>`;
-  }).join('')}</ul>`;
+    })
+    .join('');
+  return `<ul class="list">${rows}</ul>`;
 }
 
-function corpoRelogio(s) {
-  return `<label class="linha grande${s.relogio ? ' feito' : ''}">
-    <input type="checkbox" class="caixa" data-acao="relogio" data-foco="relogio" ${s.relogio ? 'checked' : ''}>
-    <span class="linha-texto"><strong>${t('relogio.marcar')}</strong><small>${t('relogio.sub')}</small></span>
+function clockBody(state) {
+  return `<label class="line large${state.clock ? ' done' : ''}">
+    <input type="checkbox" class="box" data-action="clock" data-focus="clock" ${state.clock ? 'checked' : ''}>
+    <span class="line-text"><strong>${t('clock.mark')}</strong><small>${t('clock.sub')}</small></span>
   </label>`;
 }
 
-function corpoMetas(s) {
-  return `<ul class="lista">${SHEET.metasMonstros.map((m) => {
-    const v = s.monstros[m.id] || 0;
-    const ok = v >= m.meta;
-    return `<li class="linha${ok ? ' feito' : ''}">
-      <span class="linha-texto"><strong>${esc(nomeTraduzido(`nome.${m.id}`, m.nome))}</strong>
-        <small>${t('monstros.recompensa')}: ${esc(termo(m.recompensa))}${m.descricao ? ` (${esc(termo(m.descricao))})` : ''}</small>
-        ${barraBlocos(v / m.meta, 10, 'mini')}</span>
-      <label class="meta-campo">
-        <input type="number" inputmode="numeric" min="0" value="${v}" data-acao="monstro" data-id="${m.id}" data-foco="mo-${m.id}" aria-label="${esc(m.nome)}">
-        <span>/ ${m.meta}</span>
+function goalsBody(state) {
+  const rows = SHEET.monsterGoals
+    .map((monster) => {
+      const slain = state.monsters[monster.id] || 0;
+      const description = monster.description ? ` (${escapeHtml(translateTerm(monster.description))})` : '';
+      return `<li class="line${slain >= monster.goal ? ' done' : ''}">
+      <span class="line-text"><strong>${escapeHtml(translatedName(`name.${monster.id}`, monster.name))}</strong>
+        <small>${t('monsters.reward')}: ${escapeHtml(translateTerm(monster.reward))}${description}</small>
+        ${blockBarHtml(slain / monster.goal, MINI_BAR_BLOCKS, 'mini')}</span>
+      <label class="goal-field">
+        <input type="number" inputmode="numeric" min="0" value="${slain}" data-action="monster" data-id="${monster.id}" data-focus="mo-${monster.id}" aria-label="${escapeHtml(monster.name)}">
+        <span>/ ${monster.goal}</span>
       </label>
     </li>`;
-  }).join('')}</ul>
-  <button class="botao secundario largo" data-acao="abrir" data-valor="col:bestiary" data-foco="bestiario">${htmlIcone(ICONE_EXTRAS.bestiary)} ${t('col.bestiary')}</button>`;
+    })
+    .join('');
+  return `<ul class="list">${rows}</ul>
+  <button class="button secondary wide" data-action="open" data-value="${collectionPanelId(REFERENCE_ONLY_COLLECTION)}" data-focus="bestiary">${iconHtml(EXTRA_COLLECTION_ICONS.bestiary)} ${t('collection.bestiary')}</button>`;
 }
 
-function pips(acao, id, valor, max, necessario, rotulo, coracao) {
-  let html = '';
-  for (let i = 1; i <= max; i++) {
-    const cheio = i <= valor;
-    html += `<button class="pip${i > necessario ? ' extra' : ''}" data-acao="${acao}" data-id="${esc(id)}" data-n="${i}"
-      data-foco="${acao}-${esc(id)}-${i}" aria-label="${esc(rotulo)}: ${i}" aria-pressed="${cheio}">
-      ${coracao ? icone('coracao', cheio ? {} : CORACAO_VAZIO) : '<span class="ponto"></span>'}</button>`;
+function pipsHtml({ action, id, value, required, label, isHeart }) {
+  const pips = Array.from({ length: MAX_HEARTS }, (_, index) => {
+    const position = index + 1;
+    const isFull = position <= value;
+    const symbol = isHeart ? pixelIcon('heart', isFull ? {} : EMPTY_HEART_COLORS) : '<span class="point"></span>';
+    return `<button class="pip${position > required ? ' extra' : ''}" data-action="${action}" data-id="${escapeHtml(id)}" data-n="${position}"
+      data-focus="${action}-${escapeHtml(id)}-${position}" aria-label="${escapeHtml(label)}: ${position}" aria-pressed="${isFull}">
+      ${symbol}</button>`;
+  });
+  return pips.join('');
+}
+
+function giftsHtml(names) {
+  return (names || [])
+    .map((name) => {
+      const item = findItemByName(name);
+      const translatedGiftName = escapeHtml(translateTerm(name));
+      return item
+        ? `<img class="gift" src="${iconUrl(item.icon)}" alt="${translatedGiftName}" data-hint="${translatedGiftName}" loading="lazy">`
+        : `<span class="gift-text">${translatedGiftName}</span>`;
+    })
+    .join('');
+}
+
+function villagerGiftsHtml(villager) {
+  if (!villager.loves?.length) {
+    return '';
   }
-  return html;
+  const likes = villager.likes?.length ? `<p class="small">${t('friends.likes')}</p><div class="gifts">${giftsHtml(villager.likes)}</div>` : '';
+  return `<details><summary>${t('friends.loves')} / ${t('friends.likes')}</summary>
+          <p class="small">${t('friends.loves')}</p><div class="gifts">${giftsHtml(villager.loves)}</div>
+          ${likes}
+        </details>`;
 }
 
-function presentes(lista) {
-  return (lista || []).map((nome) => {
-    const it = itemPorNome(nome);
-    return it
-      ? `<img class="presente" src="${iconeUrl(it.icone)}" alt="${esc(termo(nome))}" data-dica="${esc(termo(nome))}" loading="lazy">`
-      : `<span class="presente-texto">${esc(termo(nome))}</span>`;
-  }).join('');
-}
-
-function corpoAldeoes(s) {
-  return `<ul class="aldeoes">${SHEET.aldeoes.map((a) => {
-    const v = s.amigos[a.nome] || 0;
-    const precisa = coracoesNecessarios(a);
-    const nome = termo(a.nome);
-    return `<li class="aldeao${v >= precisa ? ' feito' : ''}">
-      <div class="retrato"><img src="${iconeUrl(a.icone)}" alt="" loading="lazy"></div>
-      <div class="aldeao-info">
-        <h3>${esc(nome)}${a.solteiro ? ` <span class="selo" title="${t('amigos.solteiro')}">♥</span>` : ''}</h3>
-        <p class="pequeno">${t('amigos.aniversario')}: ${esc(termo(a.aniversario))} · ${t('amigos.coracoes', { n: v, m: precisa })}</p>
-        <div class="pips">${pips('coracao', a.nome, v, 10, precisa, nome, true)}</div>
-        ${a.ama?.length ? `<details><summary>${t('amigos.ama')} / ${t('amigos.gosta')}</summary>
-          <p class="pequeno">${t('amigos.ama')}</p><div class="presentes">${presentes(a.ama)}</div>
-          ${a.gosta?.length ? `<p class="pequeno">${t('amigos.gosta')}</p><div class="presentes">${presentes(a.gosta)}</div>` : ''}
-        </details>` : ''}
+function villagersBody(state) {
+  const rows = SHEET.villagers
+    .map((villager) => {
+      const hearts = state.friends[villager.name] || 0;
+      const required = requiredHearts(villager);
+      const name = translateTerm(villager.name);
+      const candidateSeal = villager.isMarriageCandidate ? ` <span class="seal" title="${t('friends.candidate')}">♥</span>` : '';
+      return `<li class="villager${hearts >= required ? ' done' : ''}">
+      <div class="portrait"><img src="${iconUrl(villager.icon)}" alt="" loading="lazy"></div>
+      <div class="villager-info">
+        <h3>${escapeHtml(name)}${candidateSeal}</h3>
+        <p class="small">${t('friends.birthday')}: ${escapeHtml(translateTerm(villager.birthday))} · ${t('friends.hearts', { n: hearts, m: required })}</p>
+        <div class="pips">${pipsHtml({ action: 'heart', id: villager.name, value: hearts, required, label: name, isHeart: true })}</div>
+        ${villagerGiftsHtml(villager)}
       </div>
     </li>`;
-  }).join('')}</ul>`;
+    })
+    .join('');
+  return `<ul class="villagers">${rows}</ul>`;
 }
 
-function corpoHabilidades(s) {
-  return `<p class="destaque">${t('nivel.titulo', { n: `<strong>${nivelFazendeiro(s)}</strong>` })}</p>
-    <ul class="lista">${SKILLS.map((k) => {
-      const v = s.habilidades[k] || 0;
-      return `<li class="linha${v >= 10 ? ' feito' : ''}">
-        <span class="linha-texto"><strong>${t(`skill.${k}`)}</strong><small>${t('nivel.n', { n: v })}</small></span>
-        <span class="pips">${pips('habilidade', k, v, 10, 10, t(`skill.${k}`), false)}</span>
+function skillsBody(state) {
+  const rows = SKILLS.map((skill) => {
+    const level = state.skills[skill] || 0;
+    const label = t(`skill.${skill}`);
+    return `<li class="line${level >= MAX_SKILL_LEVEL ? ' done' : ''}">
+        <span class="line-text"><strong>${label}</strong><small>${t('level.n', { n: level })}</small></span>
+        <span class="pips">${pipsHtml({ action: 'skill', id: skill, value: level, required: MAX_SKILL_LEVEL, label, isHeart: false })}</span>
       </li>`;
-    }).join('')}</ul>`;
+  }).join('');
+  return `<p class="highlight">${t('level.title', { n: `<strong>${farmerLevel(state)}</strong>` })}</p>
+    <ul class="list">${rows}</ul>`;
 }
 
-function corpoNozes(s) {
-  const f = filtroDe('nozes');
-  const grupos = {};
-  for (const n of SHEET.nozes) (grupos[n.secao] ??= []).push(n);
-  return `
-    <div class="segmentado" role="group">
-      ${['faltando', 'todos'].map((k) => `<button class="seg" data-acao="status-nozes" data-valor="${k}" data-foco="nz-${k}" aria-pressed="${f.status === k || (k === 'todos' && f.status !== 'faltando')}">${t(`filtro.${k}`)}</button>`).join('')}
-    </div>
-    ${Object.entries(grupos).map(([sec, lista]) => {
-      const visiveis = lista.filter((n) => f.status !== 'faltando' || !s.nozes[n.id]);
-      if (!visiveis.length) return '';
-      const feitos = lista.reduce((t2, n) => t2 + (s.nozes[n.id] ? n.pontos : 0), 0);
-      const total = lista.reduce((t2, n) => t2 + n.pontos, 0);
-      return `<h3 class="subtitulo">${esc(termo(sec))} <small>${feitos}/${total}</small></h3>
-        <ul class="lista">${visiveis.map((n) => `<li><label class="linha${s.nozes[n.id] ? ' feito' : ''}">
-          <input type="checkbox" class="caixa" data-acao="marcar" data-chave="nozes" data-id="${n.id}" data-foco="nz-${n.id}" ${s.nozes[n.id] ? 'checked' : ''}>
-          <span class="linha-texto"><strong>${esc(termo(n.tipo))} <span class="pontos">×${n.pontos}</span></strong>${n.como ? `<small>${esc(termo(n.como))}</small>` : ''}</span>
-        </label></li>`).join('')}</ul>`;
-    }).join('')}`;
+function groupBySection(walnuts) {
+  const groups = {};
+  for (const walnut of walnuts) {
+    (groups[walnut.section] ??= []).push(walnut);
+  }
+  return groups;
 }
 
-function painelExtras(s) {
-  return `${topo({ pixel: 'mochila' }, t('cat.extras'), [t('dica.extras')])}
-    <div class="corpo"><div class="extras">${COLECOES_EXTRAS.map((col) => {
-      const total = SHEET.colecoes[col].length;
-      const feitos = contarColecao(s, col);
-      const semCheck = col === 'bestiary';
-      return `<button class="extra moldura-fina" data-acao="abrir" data-valor="col:${col}" data-foco="ex-${col}">
-        ${htmlIcone(ICONE_EXTRAS[col], 'grande')}
-        <span><strong>${t(`col.${col}`)}</strong><small>${semCheck ? total : t('painel.progresso', { a: feitos, b: total })}</small></span>
-        ${semCheck ? '' : barraBlocos(feitos / total, 10, 'mini')}
+const sumPoints = (walnuts, isIncluded = () => true) => walnuts.reduce((total, walnut) => total + (isIncluded(walnut) ? walnut.points : 0), 0);
+
+function walnutRowHtml(walnut, state) {
+  const isDone = state.walnuts[walnut.id];
+  return `<li><label class="line${isDone ? ' done' : ''}">
+          <input type="checkbox" class="box" data-action="mark" data-key="walnuts" data-id="${walnut.id}" data-focus="nz-${walnut.id}" ${isDone ? 'checked' : ''}>
+          <span class="line-text"><strong>${escapeHtml(translateTerm(walnut.kind))} <span class="points">×${walnut.points}</span></strong>${walnut.source ? `<small>${escapeHtml(translateTerm(walnut.source))}</small>` : ''}</span>
+        </label></li>`;
+}
+
+function walnutSectionHtml([section, walnuts], state, filter) {
+  const visibleWalnuts = walnuts.filter((walnut) => filter.status !== 'missing' || !state.walnuts[walnut.id]);
+  if (!visibleWalnuts.length) {
+    return '';
+  }
+  const done = sumPoints(walnuts, (walnut) => state.walnuts[walnut.id]);
+  return `<h3 class="subtitle">${escapeHtml(translateTerm(section))} <small>${done}/${sumPoints(walnuts)}</small></h3>
+        <ul class="list">${visibleWalnuts.map((walnut) => walnutRowHtml(walnut, state)).join('')}</ul>`;
+}
+
+function walnutsBody(state) {
+  const filter = filterOf('walnuts');
+  const statusButtons = ['missing', 'all']
+    .map((status) => {
+      const isActive = status === 'missing' ? filter.status === 'missing' : filter.status !== 'missing';
+      return `<button class="seg" data-action="status-walnuts" data-value="${status}" data-focus="nz-${status}" aria-pressed="${isActive}">${t(`filter.${status}`)}</button>`;
+    })
+    .join('');
+  const sections = Object.entries(groupBySection(SHEET.walnuts))
+    .map((sectionEntry) => walnutSectionHtml(sectionEntry, state, filter))
+    .join('');
+  return `<div class="segmented" role="group">${statusButtons}</div>${sections}`;
+}
+
+function extraCollectionButtonHtml(collection, state) {
+  const total = SHEET.collections[collection].length;
+  const done = countCollected(state, collection);
+  const referenceOnly = isReferenceOnly(collection);
+  return `<button class="extra frame-thin" data-action="open" data-value="${collectionPanelId(collection)}" data-focus="ex-${collection}">
+        ${iconHtml(EXTRA_COLLECTION_ICONS[collection], 'large')}
+        <span><strong>${t(`collection.${collection}`)}</strong><small>${referenceOnly ? total : progressText(done, total)}</small></span>
+        ${referenceOnly ? '' : blockBarHtml(done / total, MINI_BAR_BLOCKS, 'mini')}
       </button>`;
-    }).join('')}</div></div>`;
 }
 
-export { TOTAL_NOZES };
+function extrasPanel(state) {
+  const header = headerHtml({ icon: { pixel: 'backpack' }, title: t('cat.extras'), lines: [t('hint.extras')] });
+  return `${header}
+    <div class="body"><div class="extras">${EXTRA_COLLECTIONS.map((collection) => extraCollectionButtonHtml(collection, state)).join('')}</div></div>`;
+}

@@ -1,26 +1,28 @@
-// Ícones em pixel art originais, desenhados como mapas de caracteres.
-// Cada letra vira um pixel com a cor da PALETA; "." é transparente.
-
-const PALETA = {
-  k: '#3b2410', w: '#8a5a2b', W: '#c68b4e', p: '#8a4fc4', P: '#cfa2f2', y: '#f2c230', Y: '#fff0a0',
-  s: '#c9d3dc', S: '#8e9aa6', b: '#8a5a2b', r: '#d8343b', R: '#ff9a84', g: '#6daa2c', G: '#9be06a',
-  f: '#4f9fd8', F: '#a6dcff', e: '#ffffff', o: '#e8833a', c: '#f3ddb0',
+const PALETTE = {
+  k: '#3b2410',
+  w: '#8a5a2b',
+  W: '#c68b4e',
+  p: '#8a4fc4',
+  P: '#cfa2f2',
+  y: '#f2c230',
+  Y: '#fff0a0',
+  s: '#c9d3dc',
+  S: '#8e9aa6',
+  b: '#8a5a2b',
+  r: '#d8343b',
+  R: '#ff9a84',
+  g: '#6daa2c',
+  G: '#9be06a',
+  f: '#4f9fd8',
+  F: '#a6dcff',
+  e: '#ffffff',
+  o: '#e8833a',
+  c: '#f3ddb0',
 };
 
-export const ICONES = {
-  caixote: [
-    '..........',
-    '.kkkkkkkk.',
-    '.kWWWWWWk.',
-    '.kkkkkkkk.',
-    '.kwwwwwwk.',
-    '.kwkwwkwk.',
-    '.kwwwwwwk.',
-    '.kwkwwkwk.',
-    '.kkkkkkkk.',
-    '..........',
-  ],
-  obelisco: [
+export const ICONS = {
+  crate: ['..........', '.kkkkkkkk.', '.kWWWWWWk.', '.kkkkkkkk.', '.kwwwwwwk.', '.kwkwwkwk.', '.kwwwwwwk.', '.kwkwwkwk.', '.kkkkkkkk.', '..........'],
+  obelisk: [
     '....kk....',
     '...kPPk...',
     '...kppk...',
@@ -32,31 +34,9 @@ export const ICONES = {
     '.kkkkkkkk.',
     '.kSSSSSSk.',
   ],
-  relogio: [
-    '...kkkk...',
-    '..kyyyyk..',
-    '.kyeeeeyk.',
-    '.kyekeeyk.',
-    '.kyekkeyk.',
-    '.kyeeeeyk.',
-    '.kyeeeeyk.',
-    '..kyyyyk..',
-    '...kkkk...',
-    '..kyyyyk..',
-  ],
-  espada: [
-    '.......kk.',
-    '......kesk',
-    '.....kesk.',
-    '....kesk..',
-    '...kesk...',
-    '.kkesk....',
-    '..kyk.....',
-    '.kbkyk....',
-    'kbk..k....',
-    '.k........',
-  ],
-  coracaoGrande: [
+  clock: ['...kkkk...', '..kyyyyk..', '.kyeeeeyk.', '.kyekeeyk.', '.kyekkeyk.', '.kyeeeeyk.', '.kyeeeeyk.', '..kyyyyk..', '...kkkk...', '..kyyyyk..'],
+  sword: ['.......kk.', '......kesk', '.....kesk.', '....kesk..', '...kesk...', '.kkesk....', '..kyk.....', '.kbkyk....', 'kbk..k....', '.k........'],
+  largeHeart: [
     '..........',
     '.kk...kk..',
     'kRrk.krrk.',
@@ -68,43 +48,10 @@ export const ICONES = {
     '....k.....',
     '..........',
   ],
-  estrela: [
-    '....kk....',
-    '...kyyk...',
-    '...kyyk...',
-    'kkkkyykkkk',
-    'kYyyyyyyyk',
-    '.kkyyyykk.',
-    '..kyyyyk..',
-    '.kyykkyyk.',
-    '.kykk.kyk.',
-    '.kk....kk.',
-  ],
-  fruta: [
-    '.....g....',
-    '....kgk...',
-    '..kkkkkk..',
-    '.kpPpppk..',
-    'kpPpppppk.',
-    'kppppppPk.',
-    'kpppppppk.',
-    '.kpppppk..',
-    '..kkkkk...',
-    '..........',
-  ],
-  tigela: [
-    '...e..e...',
-    '....e..e..',
-    '...e..e...',
-    'kkkkkkkkkk',
-    'kgoGogoGok',
-    'kWWWWWWWWk',
-    '.kwwwwwwk.',
-    '.kwwwwwwk.',
-    '..kkkkkk..',
-    '..........',
-  ],
-  martelo: [
+  star: ['....kk....', '...kyyk...', '...kyyk...', 'kkkkyykkkk', 'kYyyyyyyyk', '.kkyyyykk.', '..kyyyyk..', '.kyykkyyk.', '.kykk.kyk.', '.kk....kk.'],
+  fruit: ['.....g....', '....kgk...', '..kkkkkk..', '.kpPpppk..', 'kpPpppppk.', 'kppppppPk.', 'kpppppppk.', '.kpppppk..', '..kkkkk...', '..........'],
+  bowl: ['...e..e...', '....e..e..', '...e..e...', 'kkkkkkkkkk', 'kgoGogoGok', 'kWWWWWWWWk', '.kwwwwwwk.', '.kwwwwwwk.', '..kkkkkk..', '..........'],
+  hammer: [
     '.kkkkkk...',
     'kSssssSk..',
     'kSssssSk..',
@@ -116,19 +63,8 @@ export const ICONES = {
     '....kk....',
     '..........',
   ],
-  peixe: [
-    '..........',
-    '...kkkk...',
-    '..kFFffk.k',
-    '.kfekfffkk',
-    '.kffffffk.',
-    '.kffffffkk',
-    '..kffffk.k',
-    '...kkkk...',
-    '..........',
-    '..........',
-  ],
-  noz: [
+  fish: ['..........', '...kkkk...', '..kFFffk.k', '.kfekfffkk', '.kffffffk.', '.kffffffkk', '..kffffk.k', '...kkkk...', '..........', '..........'],
+  walnut: [
     '....kk....',
     '...kyyk...',
     '..kyYyyk..',
@@ -140,7 +76,7 @@ export const ICONES = {
     '...kkkk...',
     '..........',
   ],
-  conta: [
+  account: [
     '...kkkk...',
     '..kcccck..',
     '..kcekck..',
@@ -152,31 +88,9 @@ export const ICONES = {
     '.kkkkkkkk.',
     '..........',
   ],
-  mais: [
-    '..........',
-    '...kkkk...',
-    '...keek...',
-    '.kkkeekkk.',
-    '.keeeeeek.',
-    '.keeeeeek.',
-    '.kkkeekkk.',
-    '...keek...',
-    '...kkkk...',
-    '..........',
-  ],
-  menos: [
-    '..........',
-    '..........',
-    '..........',
-    '.kkkkkkkk.',
-    '.keeeeeek.',
-    '.keeeeeek.',
-    '.kkkkkkkk.',
-    '..........',
-    '..........',
-    '..........',
-  ],
-  alvo: [
+  plus: ['..........', '...kkkk...', '...keek...', '.kkkeekkk.', '.keeeeeek.', '.keeeeeek.', '.kkkeekkk.', '...keek...', '...kkkk...', '..........'],
+  minus: ['..........', '..........', '..........', '.kkkkkkkk.', '.keeeeeek.', '.keeeeeek.', '.kkkkkkkk.', '..........', '..........', '..........'],
+  target: [
     '...kkkk...',
     '..keeeek..',
     '.kek..kek.',
@@ -188,19 +102,8 @@ export const ICONES = {
     '..keeeek..',
     '...kkkk...',
   ],
-  engrenagem: [
-    '...k..k...',
-    '..kekkek..',
-    '.keeeeeek.',
-    'kkeekkeekk',
-    '.keke.kek.',
-    '.keke.kek.',
-    'kkeekkeekk',
-    '.keeeeeek.',
-    '..kekkek..',
-    '...k..k...',
-  ],
-  mochila: [
+  gear: ['...k..k...', '..kekkek..', '.keeeeeek.', 'kkeekkeekk', '.keke.kek.', '.keke.kek.', 'kkeekkeekk', '.keeeeeek.', '..kekkek..', '...k..k...'],
+  backpack: [
     '...kkkk...',
     '..kk..kk..',
     '.kkkkkkkk.',
@@ -212,26 +115,21 @@ export const ICONES = {
     'kwwwwwwwwk',
     '.kkkkkkkk.',
   ],
-  coracao: [
-    '.kk.kk.',
-    'krrkrrk',
-    'krrrrrk',
-    '.krrrk.',
-    '..krk..',
-    '...k...',
-  ],
+  heart: ['.kk.kk.', 'krrkrrk', 'krrrrrk', '.krrrk.', '..krk..', '...k...'],
 };
 
-export function icone(nome, trocas = {}) {
-  const mapa = ICONES[nome];
-  const altura = mapa.length;
-  const largura = mapa[0].length;
+export function pixelIcon(name, swaps = {}) {
+  const map = ICONS[name];
+  const height = map.length;
+  const width = map[0].length;
   let rects = '';
-  mapa.forEach((linha, y) => {
-    [...linha].forEach((ch, x) => {
-      const cor = trocas[ch] ?? PALETA[ch];
-      if (ch !== '.' && cor) rects += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${cor}"/>`;
+  map.forEach((line, y) => {
+    [...line].forEach((ch, x) => {
+      const color = swaps[ch] ?? PALETTE[ch];
+      if (ch !== '.' && color) {
+        rects += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${color}"/>`;
+      }
     });
   });
-  return `<svg viewBox="0 0 ${largura} ${altura}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+  return `<svg viewBox="0 0 ${width} ${height}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
 }
