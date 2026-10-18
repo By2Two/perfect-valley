@@ -1,7 +1,16 @@
 import { t, getLanguage } from '../i18n.js';
-import { getState, replaceState, createDefaultState, normalizeState, isSavedState, getConfig, setConfig } from '../store.js';
-import * as firebase from '../firebase.js';
-import { escapeHtml } from './util.js';
+import {
+  getState,
+  replaceState,
+  createDefaultState,
+  normalizeState,
+  isSavedState,
+  getConfig,
+  setConfig,
+  getFarmLayout,
+  setFarmLayout,
+} from '../store.js';
+import { parseFarmSave } from '../farmSave.js';
 
 const SEASONS = ['auto', 'spring', 'summer', 'fall', 'winter'];
 const HOURS = ['auto', 'day', 'sunset', 'night'];
@@ -9,40 +18,25 @@ const LANGUAGE_OPTIONS = [
   ['en', 'English'],
   ['pt', 'Português'],
 ];
-const SILENT_AUTH_ERRORS = new Set(['auth/popup-closed-by-user', 'auth/cancelled-popup-request']);
 const BACKUP_FILE_PREFIX = 'perfect-valley';
 const BACKUP_JSON_INDENT = 2;
 
 export function createModals({ notice }) {
   const modal = document.getElementById('modal');
   const backupInput = document.getElementById('file');
-  let kind = null;
-  let formMode = null;
-  let errorMessage = '';
-  let infoMessage = '';
-  let isBusy = false;
-  let user = null;
+  const farmInput = document.getElementById('farm-file');
+  let isOpen = false;
 
-  function clearMessages() {
-    errorMessage = '';
-    infoMessage = '';
-  }
-
-  function open(requestedKind) {
-    kind = requestedKind;
-    formMode = null;
-    clearMessages();
+  function open() {
+    isOpen = true;
     modal.hidden = false;
     render();
     modal.querySelector('button, input')?.focus();
   }
 
   function close() {
-    if (kind === 'welcome' && !getConfig().entry && !user) {
-      return;
-    }
     modal.hidden = true;
-    kind = null;
+    isOpen = false;
   }
 
   function selectorHtml(action, current, options) {
@@ -55,65 +49,6 @@ export function createModals({ notice }) {
   }
 
   const languageSelectorHtml = () => selectorHtml('language', getLanguage(), LANGUAGE_OPTIONS);
-
-  function accountFormHtml() {
-    const isCreating = formMode === 'create';
-    const nameField = isCreating ? `<label>${t('welcome.name')}<input name="name" autocomplete="nickname" maxlength="40"></label>` : '';
-    const passwordHint = isCreating ? `<small>${t('welcome.passwordHint')}</small>` : '';
-    const forgotButton = isCreating ? '' : `<button type="button" class="link" data-action="forgot">${t('welcome.forgot')}</button>`;
-    return `<form class="form-account" data-form="${formMode}" novalidate>
-      ${nameField}
-      <label>${t('welcome.email')}<input name="email" type="email" autocomplete="email" required></label>
-      <label>${t('welcome.password')}<input name="password" type="password" autocomplete="${isCreating ? 'new-password' : 'current-password'}" minlength="6" required>
-        ${passwordHint}</label>
-      <button class="button primary wide" type="submit" ${isBusy ? 'disabled' : ''}>${isCreating ? t('welcome.createBtn') : t('welcome.signInBtn')}</button>
-      <div class="links">
-        <button type="button" class="link" data-action="form" data-value="${isCreating ? 'signIn' : 'create'}">${isCreating ? t('welcome.hasAccount') : t('welcome.withoutAccount')}</button>
-        ${forgotButton}
-      </div>
-    </form>`;
-  }
-
-  function accountChoiceHtml() {
-    return `
-        <div class="pair">
-          <button class="button secondary" data-action="form" data-value="create">${t('welcome.create')}</button>
-          <button class="button secondary" data-action="form" data-value="signIn">${t('welcome.signIn')}</button>
-        </div>`;
-  }
-
-  function accountsHtml() {
-    if (!firebase.isFirebaseEnabled) {
-      return '';
-    }
-    return `
-      <button class="button wide google" data-action="google" ${isBusy ? 'disabled' : ''}><span class="g">G</span> ${t('welcome.google')}</button>
-      ${formMode ? accountFormHtml() : accountChoiceHtml()}
-      ${errorMessage ? `<p class="error" role="alert">${escapeHtml(errorMessage)}</p>` : ''}
-      ${infoMessage ? `<p class="info" role="status">${escapeHtml(infoMessage)}</p>` : ''}`;
-  }
-
-  function welcomeHtml() {
-    return `<div class="frame window welcome" role="dialog" aria-modal="true" aria-labelledby="title-modal">
-      <div class="welcome-language">${languageSelectorHtml()}</div>
-      <h1 id="title-modal" class="logo">${t('welcome.title')}</h1>
-      <p class="subtitle">${t('app.subtitle')}</p>
-      ${accountsHtml()}
-      ${firebase.isFirebaseEnabled ? `<p class="or"><span>${t('welcome.or')}</span></p>` : ''}
-      <button class="button wide guest" data-action="guest">${t('welcome.guest')}</button>
-      <p class="text-hint center">${t('welcome.guestHint')}</p>
-    </div>`;
-  }
-
-  function settingsAccountHtml() {
-    if (user) {
-      const displayName = `<strong>${escapeHtml(user.displayName || user.email || '')}</strong>`;
-      return `<p>${t('settings.connected', { name: displayName })}</p>
-         <button class="button secondary" data-action="signOut">${t('settings.signOut')}</button>`;
-    }
-    return `<p class="text-hint">${t('settings.local')}</p>
-         <button class="button secondary" data-action="signIn">${t('settings.signIn')}</button>`;
-  }
 
   function settingsHtml() {
     const config = getConfig();
@@ -134,7 +69,13 @@ export function createModals({ notice }) {
         <section><h3>${t('settings.season')}</h3>${selectorHtml('season', config.season, seasonOptions)}</section>
         <section><h3>${t('settings.hour')}</h3>${selectorHtml('hour', config.hour, hourOptions)}</section>
         <section><h3>${t('settings.animations')}</h3>${selectorHtml('animations', String(config.animations), animationOptions)}</section>
-        ${firebase.isFirebaseEnabled ? `<section><h3>${t('settings.account')}</h3>${settingsAccountHtml()}</section>` : ''}
+        <section><h3>${t('settings.farm')}</h3>
+          <p class="text-hint">${t('settings.farmNote')}</p>
+          <div class="pair">
+            <button class="button secondary" data-action="importFarm">${t('settings.importFarm')}</button>
+            ${getFarmLayout() ? `<button class="button secondary" data-action="removeFarm">${t('settings.removeFarm')}</button>` : ''}
+          </div>
+        </section>
         <section><h3>${t('settings.data')}</h3>
           <div class="pair">
             <button class="button secondary" data-action="download">${t('settings.download')}</button>
@@ -147,55 +88,9 @@ export function createModals({ notice }) {
   }
 
   function render() {
-    if (kind) {
-      modal.innerHTML = kind === 'welcome' ? welcomeHtml() : settingsHtml();
+    if (isOpen) {
+      modal.innerHTML = settingsHtml();
     }
-  }
-
-  function describeAuthError(error) {
-    const key = `error.${error?.code}`;
-    return t(key) === key ? t('error.default') : t(key);
-  }
-
-  async function attempt(action) {
-    isBusy = true;
-    clearMessages();
-    render();
-    try {
-      await action();
-    } catch (error) {
-      if (!SILENT_AUTH_ERRORS.has(error?.code)) {
-        errorMessage = describeAuthError(error);
-      }
-    }
-    isBusy = false;
-    render();
-  }
-
-  function showForm(mode) {
-    formMode = mode;
-    clearMessages();
-    render();
-    modal.querySelector('input')?.focus();
-  }
-
-  async function sendPasswordReset() {
-    const email = modal.querySelector('input[name="email"]')?.value.trim();
-    if (!email) {
-      errorMessage = t('error.auth/invalid-email');
-      render();
-      return;
-    }
-    await attempt(async () => {
-      await firebase.recoverPassword(email);
-      infoMessage = t('welcome.resetLinkSent', { email });
-    });
-  }
-
-  async function signOutUser() {
-    await firebase.signOutUser();
-    notice(t('msg.signedOut'));
-    render();
   }
 
   function eraseProgress() {
@@ -220,17 +115,14 @@ export function createModals({ notice }) {
     season: ({ value }) => setConfig({ season: value }),
     hour: ({ value }) => setConfig({ hour: value }),
     animations: ({ value }) => setConfig({ animations: value === 'true' }),
-    guest: () => {
-      setConfig({ entry: 'local' });
-      close();
-    },
-    google: () => attempt(() => firebase.signInWithGoogle()),
-    form: ({ value }) => showForm(value),
-    forgot: sendPasswordReset,
-    signIn: () => open('welcome'),
-    signOut: signOutUser,
     download: downloadBackup,
     restore: () => backupInput.click(),
+    importFarm: () => farmInput.click(),
+    removeFarm: () => {
+      setFarmLayout(null);
+      notice(t('msg.farmRemoved'));
+      render();
+    },
     erase: eraseProgress,
   };
 
@@ -243,17 +135,6 @@ export function createModals({ notice }) {
     if (element) {
       await clickHandlers[element.dataset.action]?.(element.dataset);
     }
-  });
-
-  modal.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const form = event.target;
-    const fields = Object.fromEntries(new FormData(form));
-    await attempt(() =>
-      form.dataset.form === 'create'
-        ? firebase.createAccount(fields.name?.trim(), fields.email.trim(), fields.password)
-        : firebase.signInWithEmail(fields.email.trim(), fields.password),
-    );
   });
 
   window.addEventListener('keydown', (event) => {
@@ -280,18 +161,29 @@ export function createModals({ notice }) {
     }
   });
 
+  farmInput.addEventListener('change', async () => {
+    const [file] = farmInput.files;
+    farmInput.value = '';
+    if (!file) {
+      return;
+    }
+    let layout;
+    try {
+      layout = parseFarmSave(await file.text());
+    } catch {
+      notice(t('msg.farmInvalid'));
+      return;
+    }
+    if (!setFarmLayout(layout)) {
+      notice(t('msg.farmTooLarge'));
+      return;
+    }
+    notice(t('msg.farmImported'));
+    render();
+  });
+
   return {
-    openWelcome: () => open('welcome'),
-    openConfig: () => open('config'),
-    setUser(nextUser) {
-      user = nextUser;
-      if (nextUser && kind === 'welcome') {
-        setConfig({ entry: 'account' });
-        modal.hidden = true;
-        kind = null;
-      }
-      render();
-    },
+    openConfig: open,
     rerender: render,
   };
 }

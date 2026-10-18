@@ -1,11 +1,10 @@
 import './style.css';
 import { setLanguage, onTranslationLoaded } from './i18n.js';
-import { getState, subscribe, replaceState, setCloudSaver, getConfig, onConfig } from './store.js';
+import { getState, subscribe, getConfig, onConfig, getFarmLayout, onFarmLayout } from './store.js';
 import { resolveSeason } from './season.js';
 import { createScene } from './world/scene.js';
 import { createApp } from './ui/app.js';
 import { createModals } from './ui/modals.js';
-import { observeUser, loadCloudSave, saveToCloud } from './firebase.js';
 
 setLanguage(getConfig().language);
 
@@ -18,14 +17,25 @@ const modals = createModals({ notice: (m) => app?.notice(m) });
 app = createApp({ scene, openConfig: modals.openConfig });
 
 let currentLanguage = getConfig().language;
+function seasonFor(c) {
+  const layout = getFarmLayout();
+  return c.season === 'auto' && layout ? layout.season : resolveSeason(c.season);
+}
+
+let appliedLayout;
 function applyConfig(c) {
   setLanguage(c.language);
-  scene.setSeason(resolveSeason(c.season));
+  if (getFarmLayout() !== appliedLayout) {
+    appliedLayout = getFarmLayout();
+    scene.setLayout(appliedLayout);
+  }
+  scene.setSeason(seasonFor(c));
   scene.setHour(c.hour);
   scene.setAnimations(c.animations);
-  document.body.dataset.season = resolveSeason(c.season);
+  document.body.dataset.season = seasonFor(c);
   document.body.classList.toggle('without-animation', !c.animations);
 }
+onFarmLayout(() => applyConfig(getConfig()));
 onConfig((c) => {
   applyConfig(c);
   if (c.language !== currentLanguage) {
@@ -45,35 +55,3 @@ subscribe((s) => {
   app.refresh(s);
 });
 scene.refresh(getState());
-
-if (!getConfig().entry) {
-  modals.openWelcome();
-}
-
-observeUser(async (user) => {
-  setCloudSaver(null);
-  modals.setUser(user);
-  if (!user) {
-    app.status('hud.local');
-    return;
-  }
-  app.status('hud.syncing');
-  try {
-    const cloud = await loadCloudSave(user.uid);
-    const local = getState();
-    if (cloud && (cloud.updatedAt || 0) > (local.updatedAt || 0)) {
-      replaceState(cloud, { cloud: false });
-    } else {
-      await saveToCloud(user.uid, local);
-    }
-    setCloudSaver((s) => {
-      app.status('hud.saving');
-      saveToCloud(user.uid, s)
-        .then(() => app.status('hud.cloud'))
-        .catch(() => app.status('hud.failure'));
-    });
-    app.status('hud.cloud');
-  } catch {
-    app.status('hud.offline');
-  }
-});

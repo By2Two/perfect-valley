@@ -42,7 +42,7 @@ const LEAF_MIDDLE = 0xd8d8d8;
 const LEAF_LIGHT = 0xffffff;
 const PATH_COLORS = { spring: 0xc4b8a4, summer: 0xc4b8a4, fall: 0xbfae94, winter: 0xe2ddd6 };
 
-function tileMesh(list, material, y = 0) {
+export function tileMesh(list, material, y = 0) {
   const n = list.length;
   const position = new Float32Array(n * 18);
   const nor = new Float32Array(n * 18);

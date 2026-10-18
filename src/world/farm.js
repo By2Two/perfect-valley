@@ -8,6 +8,15 @@ import { buildMine } from './assets/mine.js';
 import { buildFarmland } from './assets/sprinklers.js';
 import { buildObelisks } from './assets/obelisks.js';
 import { buildClock } from './assets/clock.js';
+import { buildImportedFarm } from './imported/index.js';
+import { loadFarmMaps } from './imported/maps.js';
+
+const DEFAULT_SPREAD = 1;
+const SHADOW_MAP_SIZE = 2048;
+const DEFAULT_SHADOW_MAP_SIZE = 1024;
+const SHADOW_COVERAGE = 0.8;
+const DEFAULT_SHADOW_SIZE = 22;
+const DEFAULT_WORLD_RADIUS = 21;
 
 const PALETTES = {
   spring: {
@@ -69,14 +78,26 @@ const PALETTES = {
 };
 
 export function buildFarm(scene) {
-  const u = createWorldKit(scene);
-  const { box, group, clickables, random } = u;
+  const defaultRoot = new THREE.Group();
+  scene.add(defaultRoot);
+  const u = createWorldKit(defaultRoot);
+  const { box, group, random } = u;
+  let imported = null;
+  let spread = DEFAULT_SPREAD;
+  let worldRadius = DEFAULT_WORLD_RADIUS;
 
   const hemi = new THREE.HemisphereLight(0xe8f6ff, 0x6a7a3a, 1.2);
   const sun = new THREE.DirectionalLight(0xfff1d6, 2.4);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
-  Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 100 });
+  sun.shadow.mapSize.set(DEFAULT_SHADOW_MAP_SIZE, DEFAULT_SHADOW_MAP_SIZE);
+  Object.assign(sun.shadow.camera, {
+    left: -DEFAULT_SHADOW_SIZE,
+    right: DEFAULT_SHADOW_SIZE,
+    top: DEFAULT_SHADOW_SIZE,
+    bottom: -DEFAULT_SHADOW_SIZE,
+    near: 1,
+    far: 100,
+  });
   sun.shadow.bias = -0.002;
   sun.shadow.normalBias = 0.05;
   scene.add(hemi, sun, sun.target);
@@ -131,10 +152,13 @@ export function buildFarm(scene) {
   let nextFlock = 6;
 
   let palette = PALETTES.spring;
+  let currentSeason = 'spring';
 
   function setSeason(e) {
     const season = PALETTES[e] ? e : 'spring';
+    currentSeason = season;
     palette = PALETTES[season];
+    imported?.setSeason(season, palette);
     scenery.setSeason(season, palette);
     house.setSeason(season);
     barn.setSeason(season);
@@ -153,12 +177,14 @@ export function buildFarm(scene) {
   }
 
   function setLight(light, sunAngle) {
-    sun.position.set(Math.cos(sunAngle) * -30, Math.sin(sunAngle) * 30 + 8, 18);
+    const scale = worldRadius / DEFAULT_WORLD_RADIUS;
+    sun.position.set(Math.cos(sunAngle) * -30 * scale, Math.sin(sunAngle) * 30 * scale + 8, 18 * scale);
     sun.intensity = 0.45 + 2.1 * light;
     sun.color.setHex(light > 0.3 ? 0xfff1d6 : 0xa9b8ff);
     hemi.intensity = 0.5 + 0.8 * light;
     const night = light < 0.35;
     u.setWindowLights(night);
+    imported?.setNight(night);
     mine.setLight(night);
     scenery.setLight(night);
     fireflies.pts.visible = night && palette.fireflies;
@@ -166,20 +192,31 @@ export function buildFarm(scene) {
   }
 
   function animate(t, dt, { move, night }) {
-    farmland.animate(t, dt, move);
-    if (!move) {
-      return;
+    if (imported) {
+      if (!move) {
+        return;
+      }
+      imported.animate(t, dt);
+    } else {
+      farmland.animate(t, dt, move);
+      if (!move) {
+        return;
+      }
+      scenery.animate(t, dt);
+      barn.animate(t, dt);
+      obelisks.animate(t);
+      clock.animate(t, dt);
     }
 
-    scenery.animate(t, dt);
-    barn.animate(t, dt);
-    obelisks.animate(t);
-    clock.animate(t, dt);
-
+    const chimneyPosition = imported ? imported.chimney?.() : chimney;
     smoke.forEach((f) => {
+      f.visible = Boolean(chimneyPosition);
+      if (!chimneyPosition) {
+        return;
+      }
       f.userData.t = (f.userData.t + dt * 0.18) % 1;
       const k = f.userData.t;
-      f.position.set(chimney.x + Math.sin(k * 6 + t) * 0.3 * k, chimney.y + k * 4, chimney.z - k * 1.2);
+      f.position.set(chimneyPosition.x + Math.sin(k * 6 + t) * 0.3 * k, chimneyPosition.y + k * 4, chimneyPosition.z - k * 1.2);
       f.scale.setScalar(0.3 + k * 0.7);
       f.material.opacity = 0.65 * (1 - k);
     });
@@ -192,17 +229,17 @@ export function buildFarm(scene) {
           return;
         }
         const y = 14 - ((t * speed * 0.6 + b[1] * 14) % 14);
-        fallingParticles.arr[i * 3] = (b[0] - 0.5) * 30 + Math.sin(t * 0.8 + b[3]) * 1.2;
+        fallingParticles.arr[i * 3] = (b[0] - 0.5) * 30 * spread + Math.sin(t * 0.8 + b[3]) * 1.2;
         fallingParticles.arr[i * 3 + 1] = y;
-        fallingParticles.arr[i * 3 + 2] = (b[2] - 0.5) * 30 + Math.cos(t * 0.6 + b[3]) * 1.2;
+        fallingParticles.arr[i * 3 + 2] = (b[2] - 0.5) * 30 * spread + Math.cos(t * 0.6 + b[3]) * 1.2;
       });
       fallingParticles.geo.attributes.position.needsUpdate = true;
     }
     if (fireflies.pts.visible) {
       fireflies.base.forEach((b, i) => {
-        fireflies.arr[i * 3] = (b[0] - 0.5) * 22 + Math.sin(t * 0.6 + b[3]) * 0.8;
+        fireflies.arr[i * 3] = (b[0] - 0.5) * 22 * spread + Math.sin(t * 0.6 + b[3]) * 0.8;
         fireflies.arr[i * 3 + 1] = 0.5 + b[1] * 2.5 + Math.sin(t * 1.3 + b[3] * 2) * 0.4;
-        fireflies.arr[i * 3 + 2] = (b[2] - 0.5) * 22 + Math.cos(t * 0.5 + b[3]) * 0.8;
+        fireflies.arr[i * 3 + 2] = (b[2] - 0.5) * 22 * spread + Math.cos(t * 0.5 + b[3]) * 0.8;
       });
       fireflies.geo.attributes.position.needsUpdate = true;
       fireflies.material.opacity = 0.6 + Math.sin(t * 4) * 0.4;
@@ -216,7 +253,7 @@ export function buildFarm(scene) {
       }
       const d = b.userData;
       const k = t * 0.35 + d.phase;
-      b.position.set(d.centerX + Math.sin(k) * 2.5, 1 + Math.sin(k * 2.3) * 0.4, d.cz + Math.sin(k * 1.7) * 2);
+      b.position.set(d.centerX * spread + Math.sin(k) * 2.5, 1 + Math.sin(k * 2.3) * 0.4, d.cz * spread + Math.sin(k * 1.7) * 2);
       b.rotation.y = Math.atan2(Math.cos(k) * 2.5, Math.cos(k * 1.7) * 3.4);
       const wing = Math.sin(t * 22 + d.phase) * 0.9;
       d.wingE.rotation.z = wing;
@@ -239,6 +276,52 @@ export function buildFarm(scene) {
     }
   }
 
+  function setShadowRadius(radius) {
+    const { camera } = sun.shadow;
+    Object.assign(camera, { left: -radius, right: radius, top: radius, bottom: -radius, far: radius * 5 });
+    camera.updateProjectionMatrix();
+    const mapSize = radius > DEFAULT_SHADOW_SIZE ? SHADOW_MAP_SIZE : DEFAULT_SHADOW_MAP_SIZE;
+    sun.shadow.mapSize.set(mapSize, mapSize);
+    sun.shadow.map?.dispose();
+    sun.shadow.map = null;
+  }
+
+  function disposeImported() {
+    imported?.root.removeFromParent();
+    imported?.root.traverse((object) => object.geometry?.dispose());
+    imported = null;
+  }
+
+  let layoutRequest = 0;
+  async function setLayout(layout) {
+    layoutRequest += 1;
+    const request = layoutRequest;
+    const mapData = layout ? await loadFarmMaps() : null;
+    if (request !== layoutRequest) {
+      return undefined;
+    }
+    disposeImported();
+    defaultRoot.visible = !layout;
+    if (layout) {
+      imported = buildImportedFarm(scene, layout, mapData);
+    }
+    worldRadius = imported ? imported.radius : DEFAULT_WORLD_RADIUS;
+    spread = worldRadius / DEFAULT_WORLD_RADIUS;
+    setShadowRadius(imported ? worldRadius * SHADOW_COVERAGE : DEFAULT_SHADOW_SIZE);
+    setSeason(currentSeason);
+    return imported ? worldRadius : null;
+  }
+
   setSeason('spring');
-  return { clickables, setSeason, updateProgress, setLight, setHour: clock.setHour, animate };
+  return {
+    get clickables() {
+      return imported ? imported.clickables : u.clickables;
+    },
+    setSeason,
+    setLayout,
+    updateProgress,
+    setLight,
+    setHour: clock.setHour,
+    animate,
+  };
 }

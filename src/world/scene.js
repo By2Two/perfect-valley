@@ -4,6 +4,8 @@ import { buildFarm } from './farm.js';
 const ZOOM_MIN = 0.75;
 const ZOOM_MAX = 3.2;
 const PAN_MAX = 13;
+const DEFAULT_RADIUS = 21;
+const HOME_ZOOM_FACTOR = 1.5;
 const PIXEL_SCALE = 3;
 const AZIMUTH = Math.PI / 4;
 const CAMERA_ELEVATION = 0.6;
@@ -39,6 +41,9 @@ export function createScene(canvas, { onClick, onHover }) {
   const parallax = new THREE.Vector2();
   let zoom = 1;
   let zoomTarget = 1;
+  let zoomMin = ZOOM_MIN;
+  let panMax = PAN_MAX;
+  let homeZoom = 1;
   let offset = 0;
   let offsetTarget = 0;
   let view = 15;
@@ -66,8 +71,8 @@ export function createScene(canvas, { onClick, onHover }) {
     camera.lookAt(focus);
   }
   function clampPan(v) {
-    if (v.length() > PAN_MAX) {
-      v.setLength(PAN_MAX);
+    if (v.length() > panMax) {
+      v.setLength(panMax);
     }
     v.y = 0;
   }
@@ -91,7 +96,7 @@ export function createScene(canvas, { onClick, onHover }) {
     return ray.ray.intersectPlane(ground, target) ? target : null;
   }
   function applyZoom(factor, p) {
-    const nextZoom = THREE.MathUtils.clamp(zoomTarget * factor, ZOOM_MIN, ZOOM_MAX);
+    const nextZoom = THREE.MathUtils.clamp(zoomTarget * factor, zoomMin, ZOOM_MAX);
     const real = nextZoom / zoomTarget;
     if (p && real !== 1) {
       const under = groundPoint(p);
@@ -280,7 +285,20 @@ export function createScene(canvas, { onClick, onHover }) {
     zoomIn: () => applyZoom(1.35),
     zoomOut: () => applyZoom(1 / 1.35),
     recenter: () => {
-      zoomTarget = 1;
+      zoomTarget = homeZoom;
+      panTarget.set(0, 0, 0);
+    },
+    setLayout: async (layout) => {
+      const result = await farm.setLayout(layout);
+      if (result === undefined) {
+        return;
+      }
+      const radius = result ?? DEFAULT_RADIUS;
+      const scale = DEFAULT_RADIUS / radius;
+      panMax = PAN_MAX / scale;
+      zoomMin = ZOOM_MIN * Math.min(1, scale);
+      homeZoom = Math.min(1, zoomMin * HOME_ZOOM_FACTOR);
+      zoomTarget = homeZoom;
       panTarget.set(0, 0, 0);
     },
   };

@@ -76,18 +76,6 @@ export const ICONS = {
     '...kkkk...',
     '..........',
   ],
-  account: [
-    '...kkkk...',
-    '..kcccck..',
-    '..kcekck..',
-    '..kcccck..',
-    '...kkkk...',
-    '..kggggk..',
-    '.kgGgggGk.',
-    '.kggggggk.',
-    '.kkkkkkkk.',
-    '..........',
-  ],
   plus: ['..........', '...kkkk...', '...keek...', '.kkkeekkk.', '.keeeeeek.', '.keeeeeek.', '.kkkeekkk.', '...keek...', '...kkkk...', '..........'],
   minus: ['..........', '..........', '..........', '.kkkkkkkk.', '.keeeeeek.', '.keeeeeek.', '.kkkkkkkk.', '..........', '..........', '..........'],
   target: [

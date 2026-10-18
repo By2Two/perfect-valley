@@ -50,11 +50,11 @@ describe('isSavedState', () => {
 
 describe('normalizeConfig', () => {
   it('uses the defaults when nothing was saved', () => {
-    expect(normalizeConfig(null)).toEqual({ language: 'en', season: 'auto', hour: 'auto', animations: true, entry: null });
+    expect(normalizeConfig(null)).toEqual({ language: 'en', season: 'auto', hour: 'auto', animations: true });
   });
 
   it('migrates the legacy Portuguese keys and values', () => {
-    const config = normalizeConfig({ idioma: 'pt', estacao: 'winter', hora: 'noite', animacoes: false, entrada: 'conta' });
-    expect(config).toEqual({ language: 'pt', season: 'winter', hour: 'night', animations: false, entry: 'account' });
+    const config = normalizeConfig({ idioma: 'pt', estacao: 'winter', hora: 'noite', animacoes: false });
+    expect(config).toEqual({ language: 'pt', season: 'winter', hour: 'night', animations: false });
   });
 });

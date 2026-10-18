@@ -1,6 +1,6 @@
 # Perfect Valley (Vale Perfeito)
 
-Rastreador de Perfeição para Stardew Valley 1.6. Uma fazenda 3D em pixel art que reflete o seu progresso, com os itens e ícones da planilha *Stardew Valley Completionist Checklist (Vanilla)*.
+Rastreador de Perfeição para Stardew Valley 1.6. Uma fazenda 3D em pixel art que reflete o seu progresso, com os itens, aldeões, peixes e coleções do jogo.
 
 ## Rodar
 
@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Abra http://localhost:5173. Sem configurar nada, dá para usar com **Continuar sem conta** (o progresso fica no navegador).
+Abra http://localhost:5173. O progresso fica salvo no navegador.
 
 ## O que tem
 
@@ -21,29 +21,23 @@ Abra http://localhost:5173. Sem configurar nada, dá para usar com **Continuar s
 - **Progresso na fazenda**: obeliscos (Terra, Água, Deserto e Ilha, com portal girando) e o Relógio de Ouro aparecem quando marcados e ficam translúcidos enquanto não forem construídos; a lavoura cresce com o nível do fazendeiro.
 - **Animações desligadas**: em Configurações; tudo que se mexe para (também respeita a preferência de movimento reduzido do sistema).
 - **Coleções com ícones**: envios, culinária, criação e peixes em grade de inventário, com filtros, busca, seções e detalhes de cada item. Em **Mais coleções** ficam museu, armas e equipamentos, alfaiataria, itens especiais e livros, espantalhos raros e o bestiário.
-- **Aldeões** com retrato, aniversário, corações e presentes favoritos (com ícone quando o item existe na planilha).
+- **Aldeões** com retrato, aniversário, corações e presentes favoritos.
 - **Nozes douradas** item a item (130 no total).
-- **Idioma**: inglês por padrão (Perfect Valley), português em Configurações (Vale Perfeito). Em português tudo é traduzido, inclusive itens, peixes, detalhes e notas da planilha; só os nomes dos aldeões ficam como no jogo.
-- **Importar da planilha**: em Configurações, **Importar marcações da planilha** copia tudo que estava marcado na sua planilha.
+- **Idioma**: inglês por padrão (Perfect Valley), português em Configurações (Vale Perfeito). Em português tudo é traduzido, inclusive itens, peixes, detalhes e notas; só os nomes dos aldeões ficam como no jogo.
 - **Teclado**: 1–9, 0, - e = abrem as categorias; Esc fecha.
 
-## Contas (Google e e-mail)
+## Dados
 
-1. Crie um projeto em https://console.firebase.google.com e adicione um **app da Web**.
-2. Em **Authentication > Método de login**, ative **Google** e **E-mail/senha**.
-3. Em **Firestore Database**, crie o banco e cole o conteúdo de `firestore.rules` na aba **Regras**.
-4. Copie `.env.example` para `.env.local` e preencha `apiKey`, `authDomain`, `projectId` e `appId`.
-5. Reinicie o `npm run dev`.
+Os itens, as seções e os ícones vêm de `src/data/sheet.json` e `public/icons/`. A tradução para português fica em `src/data/pt.json` (texto em inglês → português) e só é baixada quando o idioma é português; um texto novo que não esteja lá aparece em inglês.
 
-Ao entrar, vale o save mais recente: se a conta tiver algo mais novo que o navegador, ela ganha; senão, o navegador sobe para a conta. Para publicar, adicione o domínio do site em **Authentication > Configurações > Domínios autorizados**.
+## Fazenda importada do save
 
-## Atualizar os dados da planilha
+Em **Configurações → Sua fazenda → Enviar save da fazenda** dá para enviar o save do Stardew Valley (o arquivo com o nome da fazenda, **sem extensão**, dentro de `StardewValley/Saves/NomeDaFazenda_123456789/`; não use `SaveGameInfo` nem os `_old`). O mapa 3D passa a mostrar a fazenda real: prédios, lavoura, árvores, cercas, irrigadores, espantalhos, pisos e a casa no nível em que está. O terreno (lagos, rios, penhascos, floresta das bordas, áreas onde não dá para construir) vem do mapa do tipo de fazenda do save, e os animais de cada celeiro e galinheiro andam na frente dos prédios (somem no inverno e à noite, como no jogo). O save é lido só no navegador e o resultado fica guardado neste dispositivo. "Usar fazenda padrão" volta ao cenário original.
 
-Os itens, as seções e os ícones vêm de `src/data/sheet.json` e `public/icons/`. A tradução para português fica em `src/data/pt.json` (texto em inglês → português) e só é baixada quando o idioma é português; um texto novo que não esteja lá aparece em inglês. Se a planilha mudar, gere de novo:
+Os mapas das 8 fazendas ficam em `src/data/farmMaps.json`, gerado a partir da pasta `Content/Maps` do jogo:
 
 ```bash
-pip install openpyxl
-python tools/extract_sheet.py caminho/da/planilha.xlsx
+node tools/extract_farm_maps.mjs caminho/para/Content/Maps
 ```
 
 ## Estrutura
@@ -51,19 +45,20 @@ python tools/extract_sheet.py caminho/da/planilha.xlsx
 ```
 src/
   catalog.js       categorias, pesos da Perfeição e coleções extras
-  items.js         busca de itens e ícones da planilha
-  progress.js      cálculo da Perfeição e importação da planilha
-  data/sheet.json  itens, aldeões, metas e nozes extraídos da planilha
-  data/pt.json     tradução dos textos da planilha para português
-  store.js         progresso (navegador + nuvem) e preferências do dispositivo
+  items.js         busca de itens e ícones
+  progress.js      cálculo da Perfeição
+  data/sheet.json  itens, aldeões, metas e nozes
+  data/pt.json     tradução dos textos dos itens para português
+  farmSave.js      leitura do save do Stardew (XML) em um layout de fazenda
+  store.js         progresso e preferências do dispositivo
   i18n.js          idioma atual e tradução dos termos
   dictionary.js    textos da interface em inglês e português
-  glossary.js      termos da planilha traduzidos à mão
-  firebase.js      Google, e-mail/senha e Firestore
+  glossary.js      termos traduzidos à mão
   world/scene.js   renderização, câmera (zoom, arrastar, parallax), dia e noite
   world/farm.js    orquestra o mundo: luzes, partículas, estações e progresso
   world/textures.js texturas em pixel art desenhadas em canvas
   world/util.js    materiais, junção de geometrias, contorno e modo fantasma
+  world/imported/  fazenda importada: terreno, plantas, objetos e prédios
   world/assets/    house, barn (animais), sprinklers (lavoura e irrigadores), mine,
                    obelisks, clock e scenery (terreno, lago, cercas, árvores)
   ui/app.js        HUD, controles, barra de itens e painel
@@ -71,10 +66,10 @@ src/
   ui/modals.js     boas-vindas, login e configurações
   icons.js         ícones em pixel art desenhados em código
 public/
-  icons/           ícones extraídos da planilha
+  icons/           ícones dos itens e aldeões
   sky/clouds.svg   nuvens do céu
 tools/
-  extract_sheet.py extrator da planilha
+  extract_farm_maps.mjs  gera src/data/farmMaps.json a partir dos mapas do jogo
 ```
 
 ## Qualidade
@@ -86,6 +81,6 @@ npm test
 
 ## Arte
 
-Os ícones e retratos extraídos da planilha são arte do jogo e pertencem à ConcernedApe. Para uso pessoal não há problema. Se for publicar o site, leia antes a política de conteúdo de fãs da ConcernedApe. A fazenda 3D (geometria e texturas geradas em código), as molduras e os ícones de interface são originais, apenas inspirados no estilo do jogo.
+Os ícones e retratos dos itens e aldeões são arte do jogo e pertencem à ConcernedApe. Para uso pessoal não há problema. Se for publicar o site, leia antes a política de conteúdo de fãs da ConcernedApe. A fazenda 3D (geometria e texturas geradas em código), as molduras e os ícones de interface são originais, apenas inspirados no estilo do jogo.
 
 Projeto de fã, sem ligação com a ConcernedApe.

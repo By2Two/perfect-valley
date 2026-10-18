@@ -23,9 +23,9 @@ const DROPS_PER_TILE = 4;
 const SPLASHES_PER_TILE = 4;
 const FLIGHT = 0.6;
 const WET_COLOR = new THREE.Color(0x3e2412);
-const LEAVES = [0x3f8f2f, 0x5fae3a, 0x8ad35c];
+export const LEAVES = [0x3f8f2f, 0x5fae3a, 0x8ad35c];
 
-function bushPlant(k) {
+export function bushPlant(k) {
   k.box([0.08, 0.35, 0.08], LEAVES[0], { position: [0, 0, 0] });
   [
     [0.12, 0.34, 0.5, 0, LEAVES[0]],
@@ -41,14 +41,14 @@ function bushPlant(k) {
   });
   k.box([0.2, 0.16, 0.2], LEAVES[2], { position: [0, 0.46, 0] });
 }
-function bushFruits(k) {
+export function bushFruits(k) {
   [
     [0.18, 0.32, 0.1],
     [-0.15, 0.4, -0.12],
     [0.03, 0.58, 0.15],
   ].forEach(([x, y, z]) => k.box([0.14, 0.14, 0.14], 0xffffff, { position: [x, y, z] }));
 }
-function stemPlant(k) {
+export function stemPlant(k) {
   k.box([0.07, 0.85, 0.07], LEAVES[0], { position: [0, 0, 0] });
   [0.18, 0.42, 0.66].forEach((y, i) => {
     [0, Math.PI].forEach((side) => {
@@ -61,7 +61,7 @@ function stemPlant(k) {
   });
   k.box([0.16, 0.14, 0.16], LEAVES[2], { position: [0, 0.82, 0] });
 }
-function stemFruits(k) {
+export function stemFruits(k) {
   k.box([0.13, 0.17, 0.13], 0xffffff, { position: [0.12, 0.38, 0.06] });
   k.box([0.13, 0.17, 0.13], 0xffffff, { position: [-0.1, 0.62, -0.08] });
   k.box([0.16, 0.12, 0.16], 0xffffff, { position: [0, 0.95, 0] });
