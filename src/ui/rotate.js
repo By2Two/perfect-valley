@@ -19,29 +19,19 @@ function wasDismissed() {
 function rememberDismissal() {
   try {
     sessionStorage.setItem(DISMISSED_STORAGE_KEY, '1');
+    return true;
   } catch {
-    // A blocked sessionStorage only means the screen may come back on the next load.
+    return false;
   }
 }
 
-// Android Chrome goes fullscreen and locks to landscape; Safari has neither API and just keeps going.
+const ignoreUnsupported = () => false;
+
 async function requestLandscape() {
-  try {
-    await document.documentElement.requestFullscreen?.();
-  } catch {
-    // Fullscreen refused: the farm still works in portrait.
-  }
-  try {
-    await screen.orientation?.lock?.('landscape');
-  } catch {
-    // Orientation lock refused: the farm still works in portrait.
-  }
+  await Promise.resolve(document.documentElement.requestFullscreen?.()).catch(ignoreUnsupported);
+  await Promise.resolve(screen.orientation?.lock?.('landscape')).catch(ignoreUnsupported);
 }
 
-/**
- * Asks for landscape on a phone held in portrait. Returns true when the screen is
- * showing, in which case onDismiss runs once the player taps or turns the phone.
- */
 export function showRotateScreen({ onDismiss }) {
   if (!isTouchPhone() || !isPortrait() || wasDismissed()) {
     return false;

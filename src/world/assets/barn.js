@@ -26,7 +26,6 @@ const PROFILE = [
   [1.8, 0],
 ];
 
-// The barn floor, where every animal waits out the winter.
 const SHELTER = [-12.8, 0.4, -10.4, 3.8];
 const EYE = 0x1a1410;
 const COW = { coat: 0xfff3dc, patch: 0x6b4423, pink: 0xf0a8ae, horn: 0x8a6a40 };
@@ -65,14 +64,14 @@ export function buildBarn(u) {
   const kSnow = builder();
 
   const onWall =
-    (face, plane, target = k) =>
+    (face, plane) =>
     ([w, h, d], material, { along, y, offset, ...options }) =>
       face === '-z'
-        ? target.box([w, h, d], material, { position: [-along, y, plane - offset], ...options })
-        : target.box([d, h, w], material, { position: [plane + offset, y, -along], ...options });
+        ? k.box([w, h, d], material, { position: [-along, y, plane - offset], ...options })
+        : k.box([d, h, w], material, { position: [plane + offset, y, -along], ...options });
 
-  function addDoorLeaf(along, y, { size: [w, h], target = k }) {
-    const px = onWall('x', L / 2, target);
+  function addDoorLeaf(along, y, [w, h]) {
+    const px = onWall('x', L / 2);
     const e = 0.1;
     px([w, h, 0.08], mWall, { along, y, offset: 0.04, color: COLOR.door });
     px([w, e, 0.12], COLOR.white, { along, y, offset: 0.06 });
@@ -83,7 +82,7 @@ export function buildBarn(u) {
     const hi = h - 2 * e;
     const angle = Math.atan2(hi, wi);
     [angle, -angle].forEach((a) =>
-      target.piece(new THREE.BoxGeometry(0.1, 0.1, Math.hypot(wi, hi) - 0.04), COLOR.white, {
+      k.piece(new THREE.BoxGeometry(0.1, 0.1, Math.hypot(wi, hi) - 0.04), COLOR.white, {
         rot: new THREE.Euler(a, 0, 0),
         position: [L / 2 + 0.07, y + h / 2, -along],
       }),
@@ -131,13 +130,13 @@ export function buildBarn(u) {
 
   const side = onWall('x', L / 2);
   side([2.2, 2.05, 0.04], COLOR.dark, { along: 0, y: 0.3, offset: 0.02 });
-  addDoorLeaf(-0.5, 0.32, { size: [1.0, 1.9] });
-  addDoorLeaf(0.5, 0.32, { size: [1.0, 1.9] });
+  addDoorLeaf(-0.5, 0.32, [1.0, 1.9]);
+  addDoorLeaf(0.5, 0.32, [1.0, 1.9]);
   side([2.4, 0.14, 0.14], COLOR.white, { along: 0, y: 2.24, offset: 0.07 });
   side([2.7, 0.08, 0.1], COLOR.dark, { along: 0, y: 2.42, offset: 0.1 });
   side([0.2, 0.26, 0.2], lanternMaterial, { along: 1.35, y: 1.75, offset: 0.16 });
   side([0.26, 0.06, 0.26], COLOR.dark, { along: 1.35, y: 2.01, offset: 0.16 });
-  addDoorLeaf(0, Y0 + 0.2, { size: [0.8, 0.75] });
+  addDoorLeaf(0, Y0 + 0.2, [0.8, 0.75]);
   k.box([0.9, 0.14, 0.14], COLOR.ridge, { position: [L / 2 + 0.35, Y0 + 1.3, 0] });
   k.box([0.03, 0.5, 0.03], 0xd8c08a, { position: [L / 2 + 0.7, Y0 + 0.8, 0] });
   k.box([0.1, 0.08, 0.06], COLOR.iron, { position: [L / 2 + 0.7, Y0 + 0.74, 0] });
@@ -218,7 +217,7 @@ export function buildBarn(u) {
   const area = [x0 + 0.5, z0 + 0.6, x1 - 0.5, z1 - 0.5];
   const animals = [];
 
-  function addAnimal([x, z], { hip, legs, width, legColor, neck, speed, radius, isHen = false, roam = area }, def) {
+  function addAnimal([x, z], { hip, legs, width, legColor, neck, speed, radius, isHen = false }, def) {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
     g.rotation.y = u.random() * Math.PI * 2;
@@ -248,7 +247,6 @@ export function buildBarn(u) {
       legs: legsList,
       speed,
       isHen,
-      roam,
       radius,
       target: new THREE.Vector2(x, z),
       wait: u.random() * 3,
@@ -418,7 +416,6 @@ export function buildBarn(u) {
 
   const spotIn = ([ax0, az0, ax1, az1], target) => target.set(ax0 + u.random() * (ax1 - ax0), az0 + u.random() * (az1 - az0));
 
-  // In winter the animals walk into the barn and stay there; the rest of the year they graze outside.
   let isWinter = false;
   function setSeason(season) {
     const wasWinter = isWinter;
@@ -431,13 +428,11 @@ export function buildBarn(u) {
       a.wait = 0;
       a.graze = 0;
       a.g.visible = true;
-      spotIn(isWinter ? SHELTER : a.roam, a.target);
+      spotIn(isWinter ? SHELTER : area, a.target);
     });
   }
 
-
-  // Nudge animals apart so the herd never ends up standing inside itself.
-  function separate() {
+  function keepAnimalsApart() {
     for (let i = 0; i < animals.length; i++) {
       for (let j = i + 1; j < animals.length; j++) {
         const a = animals[i];
@@ -474,7 +469,7 @@ export function buildBarn(u) {
     if (!animations) {
       return;
     }
-    separate();
+    keepAnimalsApart();
     animals.forEach((a) => {
       const { g, body, head, legs } = a;
       if (a.wait > 0) {
@@ -488,7 +483,7 @@ export function buildBarn(u) {
         body.position.y *= 0.8;
         body.rotation.z *= 0.8;
         if (a.wait <= 0) {
-          spotIn(a.roam, a.target);
+          spotIn(area, a.target);
         }
         return;
       }
@@ -496,7 +491,6 @@ export function buildBarn(u) {
       const distance = v.length();
       if (distance < 0.1) {
         if (a.sheltering) {
-          // Settled inside the barn: the walls would hide it anyway, so stop drawing it.
           g.visible = false;
           a.wait = Number.POSITIVE_INFINITY;
           return;

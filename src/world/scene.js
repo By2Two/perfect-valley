@@ -74,7 +74,6 @@ export function createScene(canvas, { onClick, onHover }) {
     }
     v.y = 0;
   }
-  // The pixel scale stays constant: zoom and screen size never change how chunky the farm looks.
   function resize() {
     const scale = PIXEL_SCALES[pixelEffect] ?? PIXEL_SCALES[DEFAULT_PIXEL_EFFECT];
     renderer.setPixelRatio(scale === PIXEL_SCALES.off ? Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO) : 1);

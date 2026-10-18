@@ -142,7 +142,6 @@ export function buildFarm(scene) {
     farmland.setSeason(season, palette);
   }
 
-  // Snow, petals and rooftop snow all fade with the season instead of popping.
   const particleTint = new THREE.Color();
   let activeParticle = null;
   function fadeParticles() {

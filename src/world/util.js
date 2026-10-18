@@ -50,7 +50,6 @@ export function createWorldKit(scene) {
     return materialsTexture.get(texture);
   }
 
-  // Snow has its own material so it can fade in and out with the season.
   const snowMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 1 });
   function setSnowAmount(amount) {
     snowMaterial.opacity = amount;

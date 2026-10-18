@@ -36,8 +36,6 @@ const OCCUPIED = [
   [-5, -2, 0.2, -1],
   [6, -2.4, 7.4, -0.4],
 ];
-// Seasons follow the Stardew sprites: pines turn olive in fall and frost over in winter,
-// leafy trees go crimson then bare, and bushes end the year icy blue.
 const PINE_COLORS = { spring: 0x3e8c4a, summer: 0x2f7a3e, fall: 0x92902c, winter: 0x7fb4cc };
 const SEASON_FADE_SECONDS = 2.6;
 const ease = (k) => k * k * (3 - 2 * k);
@@ -308,7 +306,6 @@ export function buildScenery(u, { field }) {
     kSnow.box([1.8 * s, 0.18 * s, 1.8 * s], snowMaterial, { color: 0xf6fafc, position: [0, 1.9 * s, 0] });
     kSnow.box([1.0 * s, 0.16 * s, 1.0 * s], snowMaterial, { color: 0xf6fafc, position: [0, 2.2 * s, 0] });
     kSnow.box([2.0 * s, 0.14 * s, 1.0 * s], snowMaterial, { color: 0xf6fafc, position: [0, 1.35 * s, 0.75 * s] });
-    // Winter strips the canopy back to bare forking branches.
     const kBare = builder();
     kBare.piece(new THREE.BoxGeometry(0.22 * s, 1.1 * s, 0.22 * s), mBark, { position: [0, 0.3 * s, 0], outline: true });
     [
@@ -353,7 +350,6 @@ export function buildScenery(u, { field }) {
         rot: new THREE.Euler(0, i % 2 ? Math.PI / 4 : 0, 0),
         position: [0, (y + 0.64) * s, 0],
       });
-      // Red cones dot the olive fall pine.
       if (i < 4) {
         [0.6, -0.5].forEach((side, j) => {
           kCone.box([0.14 * s, 0.14 * s, 0.14 * s], 0xc0442e, {
@@ -384,22 +380,20 @@ export function buildScenery(u, { field }) {
     const canopy = new THREE.Group();
     canopy.position.y = a.alt;
     g.add(canopy);
-    // Each layer gets its own group: hiding the group also hides its outline mesh,
-    // which mount() does not hand back.
-    const layer = (kBuilder, options) => {
+    const groupedSoOutlineHidesToo = (kBuilder, options) => {
       const holder = new THREE.Group();
       canopy.add(holder);
       kBuilder?.mount(holder, options);
       return holder;
     };
-    const leaves = layer(a.k);
+    const leaves = groupedSoOutlineHidesToo(a.k);
     const flowers = a.kFlower ? [...a.kFlower.mount(canopy, { shadow: false }).values()] : [];
     const snow = [...a.kSnow.mount(canopy, { shadow: false }).values()];
     snow.forEach((n) => {
       n.visible = a.kind === 'pine';
     });
-    const bare = layer(a.kBare);
-    const cones = layer(a.kCone, { shadow: false });
+    const bare = groupedSoOutlineHidesToo(a.kBare);
+    const cones = groupedSoOutlineHidesToo(a.kCone, { shadow: false });
     trees.push({ canopy, leaves, flowers, snow, bare, cones, kind: a.kind, phase: random() * 6 });
   });
 
@@ -596,8 +590,6 @@ export function buildScenery(u, { field }) {
   }
   scene.add(tufts);
 
-  // Seasons cross-fade instead of snapping: the grass drifts colour, snow creeps over
-  // the trees and the little flowers grow back out of the ground.
   let season = 'spring';
   let fromSeason = 'spring';
   let palette = null;
@@ -612,7 +604,6 @@ export function buildScenery(u, { field }) {
     }
     return fromSeason === name ? 1 - k : 0;
   }
-  // How much of a 0..1 fade a flag is worth: it grows in or dies off across the halfway mark.
   function flagAmount(k, before, after) {
     if (k < 0.5) {
       return before ? 1 - k * 2 : 0;
@@ -626,7 +617,9 @@ export function buildScenery(u, { field }) {
       return;
     }
     points.forEach(([x, z, spin], i) => {
-      m4.makeRotationY(spin ?? i).scale(scratch.set(1, amount, 1)).setPosition(x, 0, z);
+      m4.makeRotationY(spin ?? i)
+        .scale(scratch.set(1, amount, 1))
+        .setPosition(x, 0, z);
       mesh.setMatrixAt(i, m4);
     });
     mesh.instanceMatrix.needsUpdate = true;
@@ -709,7 +702,6 @@ export function buildScenery(u, { field }) {
     paintSeason(0);
   }
 
-  // Blending repaints every tile, so it runs on its own slower clock.
   let sinceRepaint = 0;
   function advanceSeason(dt) {
     if (blend >= 1) {
