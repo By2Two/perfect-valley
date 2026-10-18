@@ -3,7 +3,7 @@ import { grass, pavement, water, rock, verticalPlanks, deckPlanks, shingles, bri
 import { fence } from './barn.js';
 import { geoRock } from './mine.js';
 
-export const SIZE = 30;
+export const SIZE = 32;
 const HALF_SIZE = SIZE / 2;
 const FENCE_EDGE = HALF_SIZE - 0.4;
 const TUFT_COUNT = 190;
@@ -25,14 +25,14 @@ const OCCUPIED = [
   [-9.2, -9.2, -2, -2],
   [-2.2, -3.9, -0.4, -2.5],
   [-0.4, -9.2, 6.4, 0.6],
-  [-13.8, -0.6, -7.6, 9.4],
+  [-14.8, -0.6, -7.6, 9.4],
   [7.2, -15, 15, -7],
   [-3, -11.6, 8, -9.4],
   [-13.1, -5.1, -11.1, -3.1],
   [-6.4, -2.6, -4.6, 14],
   [-13.4, -11, -10.2, -8],
   [-2.4, -7, -0.2, -5.5],
-  [-11.6, 10.2, -9.4, 12.4],
+  [12.6, 5.4, 14.6, 7.4],
   [-5, -2, 0.2, -1],
   [6, -2.4, 7.4, -0.4],
 ];
@@ -307,23 +307,24 @@ export function buildScenery(u, { field }) {
     kSnow.box([1.0 * s, 0.16 * s, 1.0 * s], snowMaterial, { color: 0xf6fafc, position: [0, 2.2 * s, 0] });
     kSnow.box([2.0 * s, 0.14 * s, 1.0 * s], snowMaterial, { color: 0xf6fafc, position: [0, 1.35 * s, 0.75 * s] });
     const kBare = builder();
-    kBare.piece(new THREE.BoxGeometry(0.22 * s, 1.1 * s, 0.22 * s), mBark, { position: [0, 0.3 * s, 0], outline: true });
+    const thin = 0.13 * s;
+    kBare.box([0.22 * s, 2.3 * s, 0.22 * s], mBark, { position: [0, -0.4 * s, 0], outline: true });
+    const arm = ([dx, dz], y, length) => {
+      const reach = (0.11 + length / 2) * s;
+      const tip = (0.11 + length - 0.07) * s;
+      const size = dx !== 0 ? [length * s, thin, thin] : [thin, thin, length * s];
+      kBare.box(size, mBark, { position: [dx * reach, y * s, dz * reach], outline: true });
+      kBare.box([thin, 0.7 * s, thin], mBark, { position: [dx * tip, y * s, dz * tip], outline: true });
+    };
     [
-      [-0.5, 0.75, 0.15, 0.55, 0],
-      [0.52, 0.8, -0.1, -0.5, 0],
-      [0.1, 0.85, 0.55, 0, -0.5],
-      [-0.15, 0.7, -0.5, 0, 0.45],
-    ].forEach(([bx, by, bz, tiltZ, tiltX]) => {
-      kBare.piece(new THREE.BoxGeometry(0.15 * s, 1.05 * s, 0.15 * s), mBark, {
-        rot: new THREE.Euler(tiltX, 0, tiltZ),
-        position: [bx * s, by * s, bz * s],
-        outline: true,
-      });
-      kBare.piece(new THREE.BoxGeometry(0.1 * s, 0.6 * s, 0.1 * s), mBark, {
-        rot: new THREE.Euler(tiltX * 1.8, 0, tiltZ * 1.8),
-        position: [bx * 1.7 * s, (by + 0.75) * s, bz * 1.7 * s],
-      });
-    });
+      [[1, 0], 0.3, 0.95],
+      [[0, -1], 0.55, 0.85],
+      [[-1, 0], 0.8, 0.9],
+      [[0, 1], 1.05, 0.8],
+      [[1, 0], 1.3, 0.6],
+      [[-1, 0], 1.5, 0.5],
+    ].forEach(([direction, y, length]) => arm(direction, y, length));
+    kBare.box([thin, 0.5 * s, thin], mBark, { position: [0, 1.9 * s, 0], outline: true });
     return { k, kFlower, kSnow, kBare, kCone: null, alt: 1.15 * s, kind: 'oak' };
   }
   function pine(x, z, s) {
@@ -520,7 +521,7 @@ export function buildScenery(u, { field }) {
   walnut.position.set(0.7, 0.25, 0.7);
   walnut.castShadow = true;
   walnut.userData.withoutGhost = true;
-  const palmTree = group(-10.5, 11.3, walnut);
+  const palmTree = group(13.6, 6.4, walnut);
   kPalm.mount(palmTree);
   kLeafPalm.mount(palmTree);
   clickable(palmTree, 'walnuts');
@@ -750,5 +751,5 @@ export function buildScenery(u, { field }) {
     }
   }
 
-  return { setSeason, setLight, animate, seasonProgress, settleSeason: () => advanceSeason(SEASON_FADE_SECONDS) };
+  return { setSeason, setLight, animate, seasonProgress, advanceSeason, settleSeason: () => advanceSeason(SEASON_FADE_SECONDS) };
 }

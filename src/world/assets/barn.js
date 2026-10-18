@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createDoors } from '../doors.js';
 import { verticalPlanks, deckPlanks, shingles, bricks } from '../textures.js';
 
 const COLOR = {
@@ -26,7 +27,16 @@ const PROFILE = [
   [1.8, 0],
 ];
 
-const SHELTER = [-12.8, 0.4, -10.4, 3.8];
+const DOOR_HOLD_SECONDS = 1.5;
+const DOOR_SPREAD = 1.4;
+const DOOR_HALF_WIDTH = 1.6;
+const MOUTH_RADIUS = 0.5;
+const OPEN_ENOUGH = 0.8;
+const INSIDE_DEPTH = 1.9;
+const ENTER_STAGGER_SECONDS = 5;
+const CLEAR_OF_DOOR = 0.8;
+const EXIT_LANE = 0.9;
+const RELEASE_SECONDS = 7;
 const EYE = 0x1a1410;
 const COW = { coat: 0xfff3dc, patch: 0x6b4423, pink: 0xf0a8ae, horn: 0x8a6a40 };
 const GOAT = { coat: 0xd9913c, light: 0xeab15e, cream: 0xf6e3c0, horn: 0x7a4a22, hoof: 0xb06c28, udder: 0xe08a9a };
@@ -34,8 +44,9 @@ const SHEEP = { wool: 0xf2ead6, fluff: 0xfaf4e4, skin: 0xcdbfa6, muzzle: 0xb8a98
 const PIG = { skin: 0xef9aa6, light: 0xf8c2c8, dark: 0xd9737f };
 
 const POSITION = [-11.6, 2.0];
+const PEN_HALF_WIDTH = 2.6;
 const SPIN = -Math.PI / 2;
-export const FENCED_PEN = { x0: -12.8, z0: POSITION[1] + L / 2, x1: -8.2, z1: 9.0 };
+export const FENCED_PEN = { x0: POSITION[0] - PEN_HALF_WIDTH, z0: POSITION[1] + L / 2, x1: POSITION[0] + PEN_HALF_WIDTH, z1: 9.0 };
 
 export function fence(k, [a, b], { step = 1.3 } = {}) {
   const dx = b[0] - a[0];
@@ -89,6 +100,30 @@ export function buildBarn(u) {
     );
   }
 
+  function swingingLeaves() {
+    const w = 1.0;
+    const h = 1.9;
+    const e = 0.1;
+    const wi = w - 2 * e;
+    const hi = h - 2 * e;
+    const angle = Math.atan2(hi, wi);
+    return [-1, 1].map((inward) => {
+      const kLeaf = builder();
+      const mid = (inward * w) / 2;
+      kLeaf.box([0.08, h, w], mWall, { position: [0.04, 0, mid], color: COLOR.door });
+      [0, h - e].forEach((y) => kLeaf.box([0.12, e, w], COLOR.white, { position: [0.06, y, mid] }));
+      [0, 1].forEach((edge) => kLeaf.box([0.12, h, e], COLOR.white, { position: [0.06, 0, inward * (edge ? w - e / 2 : e / 2)] }));
+      [angle, -angle].forEach((a) =>
+        kLeaf.piece(new THREE.BoxGeometry(0.1, 0.1, Math.hypot(wi, hi) - 0.04), COLOR.white, {
+          rot: new THREE.Euler(a, 0, 0),
+          position: [0.07, h / 2, mid],
+        }),
+      );
+      return { builder: kLeaf, direction: inward, position: [L / 2, 0.32, -inward * w] };
+    });
+  }
+  const leaves = swingingLeaves();
+
   k.box([L + 0.2, 0.3, P + 0.2], mStone, { position: [0, 0, 0], outline: true });
   k.box([L, 2.3, P], mWall, { position: [0, 0.3, 0], outline: true });
   const shape = new THREE.Shape(PROFILE.map(([z, y]) => new THREE.Vector2(z, y)));
@@ -130,8 +165,6 @@ export function buildBarn(u) {
 
   const side = onWall('x', L / 2);
   side([2.2, 2.05, 0.04], COLOR.dark, { along: 0, y: 0.3, offset: 0.02 });
-  addDoorLeaf(-0.5, 0.32, [1.0, 1.9]);
-  addDoorLeaf(0.5, 0.32, [1.0, 1.9]);
   side([2.4, 0.14, 0.14], COLOR.white, { along: 0, y: 2.24, offset: 0.07 });
   side([2.7, 0.08, 0.1], COLOR.dark, { along: 0, y: 2.42, offset: 0.1 });
   side([0.2, 0.26, 0.2], lanternMaterial, { along: 1.35, y: 1.75, offset: 0.16 });
@@ -171,6 +204,7 @@ export function buildBarn(u) {
   barn.rotation.y = SPIN;
   k.mount(barn);
   kSnow.mount(barn, { shadow: false });
+  const doors = createDoors(barn, leaves);
   clickable(barn, 'cooking');
 
   const kc = builder();
@@ -416,6 +450,11 @@ export function buildBarn(u) {
 
   const spotIn = ([ax0, az0, ax1, az1], target) => target.set(ax0 + u.random() * (ax1 - ax0), az0 + u.random() * (az1 - az0));
 
+  const doorX = POSITION[0];
+  const doorZ = POSITION[1] + L / 2;
+  const doorPoint = (target, z) => target.set(doorX + (u.random() - 0.5) * DOOR_SPREAD, z);
+  let doorHold = 0;
+
   let isWinter = false;
   function setSeason(season) {
     const wasWinter = isWinter;
@@ -425,19 +464,48 @@ export function buildBarn(u) {
     }
     animals.forEach((a) => {
       a.sheltering = isWinter;
-      a.wait = 0;
       a.graze = 0;
-      a.g.visible = true;
-      spotIn(isWinter ? SHELTER : area, a.target);
+      a.entering = false;
+      a.inside = false;
+      if (isWinter) {
+        a.release = undefined;
+        a.enterDelay = u.random() * ENTER_STAGGER_SECONDS;
+      } else if (a.g.visible) {
+        a.wait = 0;
+        spotIn(area, a.target);
+      } else {
+        a.release = u.random() * RELEASE_SECONDS;
+      }
     });
   }
+
+  function leaveBarn(a) {
+    a.release = undefined;
+    a.leaving = true;
+    a.g.visible = true;
+    a.g.position.set(doorX + (u.random() - 0.5) * DOOR_SPREAD, 0, doorZ - INSIDE_DEPTH);
+    a.g.rotation.y = 0;
+    a.wait = 0;
+    a.via = true;
+    a.target.set(a.g.position.x, doorZ + EXIT_LANE);
+  }
+
+  function updateDoors(dt) {
+    const busy = animals.some((a) => a.leaving || (a.sheltering ? a.g.visible : a.release !== undefined));
+    doorHold = busy ? DOOR_HOLD_SECONDS : Math.max(0, doorHold - dt);
+    doors.request(doorHold > 0);
+    doors.update(dt);
+  }
+
+  const nearDoor = (a) =>
+    Math.abs(a.g.position.x - doorX) < DOOR_HALF_WIDTH && a.g.position.z > doorZ - INSIDE_DEPTH - 0.5 && a.g.position.z < doorZ + DOOR_HALF_WIDTH;
 
   function keepAnimalsApart() {
     for (let i = 0; i < animals.length; i++) {
       for (let j = i + 1; j < animals.length; j++) {
         const a = animals[i];
         const b = animals[j];
-        if (!a.g.visible || !b.g.visible) {
+        if (!a.g.visible || !b.g.visible || (nearDoor(a) && nearDoor(b))) {
           continue;
         }
         const dx = b.g.position.x - a.g.position.x;
@@ -467,11 +535,31 @@ export function buildBarn(u) {
 
   function animate(t, dt, animations = true) {
     if (!animations) {
+      doors.snap();
       return;
     }
     keepAnimalsApart();
+    updateDoors(dt);
     animals.forEach((a) => {
       const { g, body, head, legs } = a;
+      if (a.release !== undefined) {
+        a.release -= dt;
+        if (a.release <= 0 && doors.progress() >= OPEN_ENOUGH) {
+          leaveBarn(a);
+        }
+        return;
+      }
+      if (a.sheltering && !a.entering && doors.progress() >= OPEN_ENOUGH) {
+        a.enterDelay -= dt;
+        if (a.enterDelay <= 0) {
+          a.entering = true;
+          a.wait = 0;
+          doorPoint(a.target, doorZ + 0.3);
+        }
+      }
+      if (a.leaving && g.position.z > doorZ + CLEAR_OF_DOOR) {
+        a.leaving = false;
+      }
       if (a.wait > 0) {
         a.wait -= dt;
         a.graze -= dt;
@@ -489,10 +577,21 @@ export function buildBarn(u) {
       }
       v.set(a.target.x - g.position.x, a.target.y - g.position.z);
       const distance = v.length();
-      if (distance < 0.1) {
-        if (a.sheltering) {
+      if (a.entering) {
+        if (!a.inside && distance < MOUTH_RADIUS) {
+          a.inside = true;
+          doorPoint(a.target, doorZ - INSIDE_DEPTH);
+          return;
+        }
+        if (a.inside && distance < 0.2) {
           g.visible = false;
           a.wait = Number.POSITIVE_INFINITY;
+          return;
+        }
+      } else if (distance < 0.1) {
+        if (a.via) {
+          a.via = false;
+          spotIn(area, a.target);
           return;
         }
         a.wait = 1.5 + u.random() * (a.isHen ? 3 : 6);

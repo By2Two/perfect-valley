@@ -23,9 +23,9 @@ const DROPS_PER_TILE = 4;
 const SPLASHES_PER_TILE = 4;
 const FLIGHT = 0.6;
 const WET_COLOR = new THREE.Color(0x3e2412);
-const LEAVES = [0x3f8f2f, 0x5fae3a, 0x8ad35c];
+export const LEAVES = [0x3f8f2f, 0x5fae3a, 0x8ad35c];
 
-function bushPlant(k) {
+export function bushPlant(k) {
   k.box([0.08, 0.35, 0.08], LEAVES[0], { position: [0, 0, 0] });
   [
     [0.12, 0.34, 0.5, 0, LEAVES[0]],
@@ -41,14 +41,14 @@ function bushPlant(k) {
   });
   k.box([0.2, 0.16, 0.2], LEAVES[2], { position: [0, 0.46, 0] });
 }
-function bushFruits(k) {
+export function bushFruits(k) {
   [
     [0.18, 0.32, 0.1],
     [-0.15, 0.4, -0.12],
     [0.03, 0.58, 0.15],
   ].forEach(([x, y, z]) => k.box([0.14, 0.14, 0.14], 0xffffff, { position: [x, y, z] }));
 }
-function stemPlant(k) {
+export function stemPlant(k) {
   k.box([0.07, 0.85, 0.07], LEAVES[0], { position: [0, 0, 0] });
   [0.18, 0.42, 0.66].forEach((y, i) => {
     [0, Math.PI].forEach((side) => {
@@ -61,7 +61,7 @@ function stemPlant(k) {
   });
   k.box([0.16, 0.14, 0.16], LEAVES[2], { position: [0, 0.82, 0] });
 }
-function stemFruits(k) {
+export function stemFruits(k) {
   k.box([0.13, 0.17, 0.13], 0xffffff, { position: [0.12, 0.38, 0.06] });
   k.box([0.13, 0.17, 0.13], 0xffffff, { position: [-0.1, 0.62, -0.08] });
   k.box([0.16, 0.12, 0.16], 0xffffff, { position: [0, 0.95, 0] });
@@ -201,19 +201,31 @@ export function buildFarmland(u, field) {
   let isWaterVisible = false;
   const tmp = new THREE.Color();
   const fruitColor = new THREE.Color();
+  const soilMix = new THREE.Color();
+  const soilPalettes = { warm: null, winter: null };
+  let winterAmount = 0;
+  let plantsDirty = true;
+
+  function paintDry() {
+    tiles.forEach((t) => {
+      const index = (t.ix + t.iz) % 2;
+      t.dry.setHex(soilPalettes.warm[index]).lerp(soilMix.setHex(soilPalettes.winter[index]), winterAmount);
+    });
+    dirtySoil = true;
+  }
 
   function setSeason(e, p) {
     season = e;
-    tiles.forEach((t) => {
-      t.dry.setHex(p.soil[(t.ix + t.iz) % 2]);
-      if (e === 'winter') {
+    soilPalettes[e === 'winter' ? 'winter' : 'warm'] = p.soil;
+    soilPalettes.warm ??= p.soil;
+    soilPalettes.winter ??= p.soil;
+    if (e === 'winter') {
+      tiles.forEach((t) => {
         t.wet = 0;
-      }
-    });
-    dirtySoil = true;
+      });
+    }
+    paintDry();
     kinds.forEach((tp) => {
-      tp.leaves.visible = e !== 'winter';
-      tp.fruits.visible = e !== 'winter';
       tp.list.forEach((pl) => tp.fruits.setColorAt(pl.i, fruitColor.setHex(p.plants[pl.colorIdx] ?? 0xffffff)));
       if (tp.fruits.instanceColor) {
         tp.fruits.instanceColor.needsUpdate = true;
@@ -224,6 +236,14 @@ export function buildFarmland(u, field) {
   const setGrowth = (target) => {
     growthTarget = target;
   };
+  function setWinterAmount(amount) {
+    if (Math.abs(amount - winterAmount) < 1e-3 || !soilPalettes.warm) {
+      return;
+    }
+    winterAmount = amount;
+    plantsDirty = true;
+    paintDry();
+  }
 
   const position = new THREE.Vector3();
   const quat = new THREE.Quaternion();
@@ -231,11 +251,12 @@ export function buildFarmland(u, field) {
   const euler = new THREE.Euler();
   function refreshPlants(t, move) {
     const s = growth;
-    const withFruits = s > 0.55;
+    const withFruits = s > 0.55 && winterAmount < 0.5;
+    const alive = Math.max(0.001, 1 - winterAmount);
     plants.forEach((p) => {
       position.set(p.x, 0.02, p.z);
       quat.setFromEuler(euler.set(0, p.spin, move ? Math.sin(t * 1.5 + p.phase) * 0.05 : 0));
-      scaleVector.set(0.55 + 0.45 * s, s * p.variation, 0.55 + 0.45 * s);
+      scaleVector.set((0.55 + 0.45 * s) * alive, s * p.variation * alive, (0.55 + 0.45 * s) * alive);
       m4.compose(position, quat, scaleVector);
       p.kind.leaves.setMatrixAt(p.i, m4);
       p.kind.fruits.setMatrixAt(p.i, withFruits ? m4 : zero);
@@ -249,7 +270,8 @@ export function buildFarmland(u, field) {
   function animate(t, dt, move) {
     const before = growth;
     growth += (growthTarget - growth) * Math.min(1, dt * 3);
-    if (move || Math.abs(before - growth) > 1e-4 || t < 0.5) {
+    if (move || plantsDirty || Math.abs(before - growth) > 1e-4 || t < 0.5) {
+      plantsDirty = false;
       refreshPlants(t, move);
     }
 
@@ -327,5 +349,5 @@ export function buildFarmland(u, field) {
     }
   }
 
-  return { group: farmland, setSeason, setGrowth, animate };
+  return { group: farmland, setSeason, setGrowth, setWinterAmount, animate };
 }

@@ -15,7 +15,7 @@ export const CATEGORIES = [
   { id: 'level', weight: 5, kind: 'skills', icon: { pixel: 'star' } },
   { id: 'stardrops', weight: 10, kind: 'list', items: sheet.stardrops, key: 'stardrops', icon: { pixel: 'fruit' } },
   { id: 'cooking', weight: 10, kind: 'collection', collection: 'cooking', icon: { collection: 'cooking', id: 'pink-cake' } },
-  { id: 'crafting', weight: 10, kind: 'collection', collection: 'crafting', icon: { collection: 'crafting', id: 'chest' } },
+  { id: 'crafting', weight: 10, kind: 'collection', collection: 'crafting', icon: { pixel: 'chest' } },
   { id: 'fishing', weight: 10, kind: 'collection', collection: 'fishing', icon: { collection: 'fishing', id: 'pufferfish' } },
   { id: 'walnuts', weight: 5, kind: 'walnuts', icon: { pixel: 'walnut' } },
 ];
@@ -23,7 +23,7 @@ export const CATEGORIES = [
 export const EXTRA_COLLECTION_ICONS = {
   museum: { collection: 'museum', id: 'ancient-doll' },
   gear: { collection: 'gear', id: 'galaxy-sword' },
-  tailoring: { collection: 'tailoring', id: 'abigail-s-bow' },
+  tailoring: { collection: 'tailoring', id: 'blue-bow' },
   powers: { collection: 'powers', id: 'rusty-key' },
   statues: { collection: 'statues', id: 'rarecrow-1' },
   bestiary: { collection: 'bestiary', id: 'green-slime' },

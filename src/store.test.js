@@ -56,7 +56,6 @@ describe('normalizeConfig', () => {
       hour: 'auto',
       animations: true,
       pixelEffect: 'strong',
-      entry: null,
     });
   });
 
@@ -66,8 +65,8 @@ describe('normalizeConfig', () => {
   });
 
   it('migrates the legacy Portuguese keys and values', () => {
-    const config = normalizeConfig({ idioma: 'pt', estacao: 'winter', hora: 'noite', animacoes: false, entrada: 'conta' });
-    expect(config).toEqual({ language: 'pt', season: 'winter', hour: 'night', animations: false, pixelEffect: 'strong', entry: 'account' });
+    const config = normalizeConfig({ idioma: 'pt', estacao: 'winter', hora: 'noite', animacoes: false });
+    expect(config).toEqual({ language: 'pt', season: 'winter', hour: 'night', animations: false, pixelEffect: 'strong' });
   });
 });
 

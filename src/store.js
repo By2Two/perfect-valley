@@ -1,11 +1,12 @@
 import { SHEET, SKILLS } from './catalog.js';
+import { isValidLayout } from './farmSave.js';
 
 const SAVE_STORAGE_KEY = 'perfect-valley:save';
 const CONFIG_STORAGE_KEY = 'perfect-valley:config';
+const FARM_STORAGE_KEY = 'perfect-valley:farm';
 const LEGACY_SAVE_STORAGE_KEY = 'rumo-perfeicao:save';
 const LEGACY_CONFIG_STORAGE_KEY = 'rumo-perfeicao:config';
 const SAVE_VERSION = 2;
-const CLOUD_SAVE_DELAY_MS = 900;
 
 const LEGACY_SAVE_KEYS = {
   itens: 'items',
@@ -18,13 +19,12 @@ const LEGACY_SAVE_KEYS = {
   relogio: 'clock',
   atualizadoEm: 'updatedAt',
 };
-const LEGACY_CONFIG_KEYS = { idioma: 'language', estacao: 'season', hora: 'hour', animacoes: 'animations', entrada: 'entry' };
+const LEGACY_CONFIG_KEYS = { idioma: 'language', estacao: 'season', hora: 'hour', animacoes: 'animations' };
 const LEGACY_HOUR_VALUES = { dia: 'day', tarde: 'sunset', noite: 'night' };
-const LEGACY_ENTRY_VALUES = { conta: 'account' };
-const PORTUGUESE_LANGUAGE_PATTERN = /^pt\b/i;
+const PORTUGUESE_LANGUAGE_PATTERN = /^pt(-|_|$)/i;
 const FALLBACK_LANGUAGE = 'en';
 
-const DEFAULT_CONFIG = { language: null, season: 'auto', hour: 'auto', animations: true, pixelEffect: 'strong', entry: null };
+const DEFAULT_CONFIG = { language: null, season: 'auto', hour: 'auto', animations: true, pixelEffect: 'strong' };
 
 export function detectLanguage() {
   const preferred = typeof navigator === 'undefined' ? '' : navigator.language || navigator.languages?.[0] || '';
@@ -82,7 +82,6 @@ export function normalizeConfig(raw) {
     language: stored.language ?? detectLanguage(),
     hour: LEGACY_HOUR_VALUES[stored.hour] ?? stored.hour ?? DEFAULT_CONFIG.hour,
     pixelEffect: stored.pixelEffect ?? DEFAULT_CONFIG.pixelEffect,
-    entry: LEGACY_ENTRY_VALUES[stored.entry] ?? stored.entry ?? DEFAULT_CONFIG.entry,
   };
 }
 
@@ -104,8 +103,6 @@ function writeJson(key, value) {
 }
 
 let state = normalizeState(readJson(SAVE_STORAGE_KEY) ?? readJson(LEGACY_SAVE_STORAGE_KEY));
-let cloudSaver = null;
-let cloudSaveTimer = null;
 const listeners = new Set();
 
 export const getState = () => state;
@@ -115,12 +112,8 @@ export function subscribe(listener) {
   return () => listeners.delete(listener);
 }
 
-function persist({ cloud = true } = {}) {
+function persist() {
   writeJson(SAVE_STORAGE_KEY, state);
-  if (cloud && cloudSaver) {
-    clearTimeout(cloudSaveTimer);
-    cloudSaveTimer = setTimeout(() => cloudSaver(state), CLOUD_SAVE_DELAY_MS);
-  }
 }
 
 function notifyListeners() {
@@ -134,17 +127,13 @@ export function update(mutate) {
   notifyListeners();
 }
 
-export function replaceState(incomingState, { touch = false, cloud = true } = {}) {
+export function replaceState(incomingState, { touch = false } = {}) {
   state = normalizeState(incomingState);
   if (touch) {
     state.updatedAt = Date.now();
   }
-  persist({ cloud });
+  persist();
   notifyListeners();
-}
-
-export function setCloudSaver(saver) {
-  cloudSaver = saver;
 }
 
 let config = normalizeConfig(readJson(CONFIG_STORAGE_KEY) ?? readJson(LEGACY_CONFIG_STORAGE_KEY));
@@ -161,4 +150,27 @@ export function setConfig(partial) {
 export function onConfig(listener) {
   configListeners.add(listener);
   return () => configListeners.delete(listener);
+}
+
+const storedLayout = readJson(FARM_STORAGE_KEY);
+let farmLayout = isValidLayout(storedLayout) ? storedLayout : null;
+const farmListeners = new Set();
+
+export const getFarmLayout = () => farmLayout;
+
+export function setFarmLayout(layout) {
+  if (layout && !writeJson(FARM_STORAGE_KEY, layout)) {
+    return false;
+  }
+  if (!layout) {
+    localStorage.removeItem(FARM_STORAGE_KEY);
+  }
+  farmLayout = layout;
+  farmListeners.forEach((listener) => listener(farmLayout));
+  return true;
+}
+
+export function onFarmLayout(listener) {
+  farmListeners.add(listener);
+  return () => farmListeners.delete(listener);
 }

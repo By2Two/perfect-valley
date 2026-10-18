@@ -347,7 +347,7 @@ body[data-season='fall'] #sky { filter: sepia(0.15); }
 }
 .seg[aria-pressed='true'] { background: var(--green); color: #fff4dc; text-shadow: 1px 1px 0 var(--wood-dark); box-shadow: inset 0 3px 0 var(--green-dark); }
 .search { flex: 1 1 110px; min-width: 104px; }
-.search input, .form-account input, input[type='number'] {
+.search input, input[type='number'] {
   width: 100%;
   font: 20px var(--text);
   color: var(--ink);
@@ -514,6 +514,7 @@ label.line { cursor: pointer; }
 .extra strong { display: block; font: 600 15px var(--title); }
 .extra small { font-size: 18px; color: var(--ink-smooth); }
 .extra .blocks { grid-column: 1 / -1; }
+img.icon { object-fit: contain; }
 .icon.large { width: 48px; height: 48px; }
 
 
@@ -550,29 +551,10 @@ label.line { cursor: pointer; }
 .window.config { width: min(520px, 100%); padding: 8px 8px 4px; }
 .window.config section { padding: 8px 4px 12px; border-bottom: 2px dashed var(--parchment-2); display: grid; gap: 8px; justify-items: start; }
 .window.config section h3 { font-size: 15px; }
-.welcome { text-align: center; gap: 12px; overflow-y: auto; }
-.welcome-language { display: flex; justify-content: flex-end; }
-.logo {
-  font-size: 40px;
-  line-height: 1;
-  color: var(--gold);
-  text-shadow: 4px 0 0 var(--wood-dark), -4px 0 0 var(--wood-dark), 0 4px 0 var(--wood-dark), 0 -4px 0 var(--wood-dark), 4px 4px 0 var(--wood-dark), 0 8px 0 var(--wood);
-  margin: 4px 0 8px;
-}
 .sub { font-size: 20px; }
+.actions { display: flex; gap: 8px; width: 100%; }
+.actions .button { flex: 1 1 0; min-width: 0; padding: 6px; font-size: 14px; line-height: 1.15; white-space: normal; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
-.google { background: #fff4dc; color: var(--ink); text-shadow: none; box-shadow: inset -4px -4px 0 var(--parchment-2), inset 4px 4px 0 #fff, 0 4px 0 var(--wood-dark); }
-.google .g { font: 700 20px var(--title); color: #4285f4; }
-.guest { background: var(--wood); }
-.or { display: flex; align-items: center; gap: 8px; color: var(--ink-smooth); margin: 0; }
-.or::before, .or::after { content: ''; flex: 1; height: 4px; background: var(--parchment-2); }
-.form-account { display: grid; gap: 8px; text-align: left; }
-.form-account label { display: grid; gap: 2px; font: 500 14px var(--title); }
-.form-account small { font: 16px var(--text); color: var(--ink-smooth); }
-.links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
-.link { background: none; border: 0; padding: 4px 0; color: var(--wood); text-decoration: underline; cursor: pointer; font-size: 18px; }
-.error { color: var(--red); font-size: 18px; }
-.info { color: var(--green-dark); font-size: 18px; }
 
 
 .rotate {
@@ -739,8 +721,6 @@ label.line { cursor: pointer; }
   .window { max-height: calc(100dvh - 12px); padding: 10px 12px; }
   .window.config { padding: 6px 6px 2px; }
   .window.config section { padding: 6px 4px 8px; gap: 6px; }
-  .welcome { gap: 6px; }
-  .logo { font-size: 28px; margin: 2px 0 4px; }
   .rotate-stage { width: 120px; height: 120px; }
   .phone { width: 54px; height: 96px; }
   .phone-screen { width: 34px; height: 64px; }

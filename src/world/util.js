@@ -232,7 +232,37 @@ export function createWorldKit(scene) {
 
     const join = () => mergeGeometries(perMaterial.get(materialByColor));
 
-    return { piece, box, slab, mount, join };
+    function instanced(count) {
+      const byMaterial = new Map();
+      const meshes = [];
+      perMaterial.forEach((geos, material) => {
+        const m = new THREE.InstancedMesh(mergeGeometries(geos), material, count);
+        byMaterial.set(material, m);
+        meshes.push(m);
+      });
+      if (bark.length) {
+        const c = new THREE.InstancedMesh(mergeGeometries(bark), outlineMaterial, count);
+        c.userData.outline = true;
+        c.onBeforeRender = refreshResolution;
+        meshes.push(c);
+      }
+      meshes.forEach((m) => {
+        m.castShadow = true;
+        m.receiveShadow = true;
+        m.frustumCulled = false;
+        m.count = 0;
+      });
+      return {
+        meshes,
+        byMaterial,
+        setMatrixAt: (index, matrix) => meshes.forEach((m) => m.setMatrixAt(index, matrix)),
+        setCount: (n) => meshes.forEach((m) => (m.count = n)),
+        setVisible: (visible) => meshes.forEach((m) => (m.visible = visible)),
+        mount: (parent) => meshes.forEach((m) => parent.add(m)),
+      };
+    }
+
+    return { piece, box, slab, mount, join, instanced };
   }
 
   return {

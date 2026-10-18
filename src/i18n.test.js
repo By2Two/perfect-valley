@@ -17,7 +17,7 @@ describe('t', () => {
 });
 
 describe('translateTerm', () => {
-  it('keeps spreadsheet terms untouched while the language is english', () => {
+  it('keeps item terms untouched while the language is english', () => {
     expect(translateTerm('Fruit Trees')).toBe('Fruit Trees');
   });
 });

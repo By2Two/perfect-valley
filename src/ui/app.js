@@ -35,7 +35,6 @@ export function createApp({ scene, openConfig }) {
 
   let openPanelId = null;
   let panelHistory = [];
-  let statusKey = 'hud.local';
   let lastFractions = null;
   let highlightedItemId = null;
 
@@ -61,12 +60,11 @@ export function createApp({ scene, openConfig }) {
       </div>
       <p class="hud-label">${t('hud.perfection')}</p>
       <div data-bar></div>
-      <p class="hud-status" data-status></p>`;
+      <p class="hud-status">${t('hud.local')}</p>`;
     controls.innerHTML = CONTROLS.map(controlHtml).join('');
     bar.className = 'frame bar';
     bar.innerHTML = SLOTS.map(slotHtml).join('');
     refresh(getState());
-    setStatus(statusKey);
   }
 
   function togglePanel(id) {
@@ -333,14 +331,6 @@ export function createApp({ scene, openConfig }) {
     render();
   }
 
-  function setStatus(key) {
-    statusKey = key;
-    const element = hud.querySelector('[data-status]');
-    if (element) {
-      element.textContent = t(key);
-    }
-  }
-
   function showToast({ className, html, durationMs }) {
     const element = document.createElement('div');
     element.className = `toast ${className}`;
@@ -377,7 +367,6 @@ export function createApp({ scene, openConfig }) {
   return {
     open: (categoryId) => openPanel(categoryId),
     refresh,
-    status: setStatus,
     notice,
     remount: () => {
       mount();

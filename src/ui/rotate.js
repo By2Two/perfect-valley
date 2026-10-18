@@ -32,7 +32,7 @@ async function requestLandscape() {
   await Promise.resolve(screen.orientation?.lock?.('landscape')).catch(ignoreUnsupported);
 }
 
-export function showRotateScreen({ onDismiss }) {
+export function showRotateScreen() {
   if (!isTouchPhone() || !isPortrait() || wasDismissed()) {
     return false;
   }
@@ -58,7 +58,6 @@ export function showRotateScreen({ onDismiss }) {
     screenElement.remove();
     window.removeEventListener('resize', onViewportChange);
     window.removeEventListener('orientationchange', onViewportChange);
-    onDismiss();
   }
   function onViewportChange() {
     if (!isPortrait()) {

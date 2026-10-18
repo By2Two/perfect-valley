@@ -31,7 +31,7 @@ const PROFILE = [
   [2.1, 0],
 ];
 
-export function buildHouse(u) {
+export function buildHouse(u, { position = [-5.5, -6.5], yard = true } = {}) {
   const { builder, materialTexture, clickable, group, windowMaterial, lanternMaterial, snowMaterial } = u;
   const mWall = materialTexture(verticalPlanks({ base: COLOR.wall }));
   const mShingle = materialTexture(shingles({ base: COLOR.shingle }));
@@ -211,12 +211,16 @@ export function buildHouse(u) {
   k.box([0.3, 0.06, 0.5], 0x7f9fd0, { position: [-1.35, 1.15, 4.0] });
   k.box([0.04, 0.22, 0.1], 0xd8343b, { position: [-1.17, 0.95, 3.9] });
 
-  const house = group(-5.5, -6.5);
+  const house = group(...position);
   k.mount(house);
   kSnow.mount(house, { shadow: false });
   const flowers = [...kFlowers.mount(house).values()];
   clickable(house, 'friends');
-  const chimney = new THREE.Vector3(-5.5 + CH[0], 6.05, -6.5 + CH[1]);
+  const chimney = new THREE.Vector3(position[0] + CH[0], 6.05, position[1] + CH[1]);
+
+  if (!yard) {
+    return { group: house, chimney, setSeason };
+  }
 
   const kc = builder();
   kc.box([1.3, 0.62, 0.85], mDeck, { position: [0, 0, 0], color: 0xb98a60, outline: true });
