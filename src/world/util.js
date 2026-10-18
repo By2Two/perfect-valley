@@ -50,6 +50,13 @@ export function createWorldKit(scene) {
     return materialsTexture.get(texture);
   }
 
+  // Snow has its own material so it can fade in and out with the season.
+  const snowMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 1 });
+  function setSnowAmount(amount) {
+    snowMaterial.opacity = amount;
+    snowMaterial.transparent = amount < 1;
+  }
+
   const windowMaterial = new THREE.MeshLambertMaterial({ map: glass(), color: 0x9fd0ee, emissive: 0x000000 });
   const lanternMaterial = new THREE.MeshLambertMaterial({ color: 0xfff2c0, emissive: 0x000000 });
   function setWindowLights(night) {
@@ -236,6 +243,8 @@ export function createWorldKit(scene) {
     materialTexture,
     windowMaterial,
     lanternMaterial,
+    snowMaterial,
+    setSnowAmount,
     setWindowLights,
     geoBox,
     box,

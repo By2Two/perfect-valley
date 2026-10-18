@@ -78,6 +78,7 @@ export const DICTIONARY = {
     'detail.missing': 'Missing',
     'detail.notes': 'Notes',
     'detail.choice': 'Pick an item to see where and how to get it.',
+    'detail.clear': 'Close details',
     'detail.withoutCheck': 'Reference only. Not tracked.',
 
     'friends.hearts': '{n} of {m} hearts',
@@ -146,6 +147,10 @@ export const DICTIONARY = {
     'settings.animations': 'Animations',
     'settings.on': 'On',
     'settings.off': 'Off',
+    'settings.pixel': 'Pixel effect',
+    'pixel.strong': 'Strong',
+    'pixel.smooth': 'Smooth',
+    'pixel.off': 'Off',
     'settings.account': 'Account',
     'settings.connected': 'Signed in as {name}',
     'settings.local': 'Not signed in. Progress is saved on this device.',
@@ -160,6 +165,9 @@ export const DICTIONARY = {
     'msg.erased': 'Progress erased.',
     'msg.backupInvalid': "That file isn't a Perfect Valley backup.",
     'msg.signedOut': 'Signed out. Your progress is still on this device.',
+
+    'rotate.title': 'Rotate your phone',
+    'rotate.tap': 'Tap anywhere to continue',
 
     'source.earth-obelisk': 'Wizard: 500,000g, 10 Iridium Bars, 10 Earth Crystals',
     'source.water-obelisk': 'Wizard: 500,000g, 5 Iridium Bars, 10 Clams, 10 Coral',
@@ -246,6 +254,7 @@ export const DICTIONARY = {
     'detail.missing': 'Faltando',
     'detail.notes': 'Observações',
     'detail.choice': 'Escolha um item para ver onde e como conseguir.',
+    'detail.clear': 'Fechar detalhes',
     'detail.withoutCheck': 'Só para consulta. Não conta progresso.',
 
     'friends.hearts': '{n} de {m} corações',
@@ -314,6 +323,10 @@ export const DICTIONARY = {
     'settings.animations': 'Animações',
     'settings.on': 'Ligadas',
     'settings.off': 'Desligadas',
+    'settings.pixel': 'Efeito pixel',
+    'pixel.strong': 'Forte',
+    'pixel.smooth': 'Suave',
+    'pixel.off': 'Desligado',
     'settings.account': 'Conta',
     'settings.connected': 'Conectado como {name}',
     'settings.local': 'Sem conta. O progresso fica salvo neste dispositivo.',
@@ -328,6 +341,9 @@ export const DICTIONARY = {
     'msg.erased': 'Progresso apagado.',
     'msg.backupInvalid': 'Esse arquivo não é um backup do Vale Perfeito.',
     'msg.signedOut': 'Você saiu. O progresso continua neste dispositivo.',
+
+    'rotate.title': 'Gire seu celular',
+    'rotate.tap': 'Toque em qualquer lugar para continuar',
 
     'name.stardew-valley-fair': 'Feira de Stardew Valley',
     'source.stardew-valley-fair': 'Compre com o Pierre por 2.000 fichas estrela',

@@ -5,6 +5,7 @@ import { resolveSeason } from './season.js';
 import { createScene } from './world/scene.js';
 import { createApp } from './ui/app.js';
 import { createModals } from './ui/modals.js';
+import { showRotateScreen } from './ui/rotate.js';
 import { observeUser, loadCloudSave, saveToCloud } from './firebase.js';
 
 setLanguage(getConfig().language);
@@ -23,6 +24,7 @@ function applyConfig(c) {
   scene.setSeason(resolveSeason(c.season));
   scene.setHour(c.hour);
   scene.setAnimations(c.animations);
+  scene.setPixelEffect(c.pixelEffect);
   document.body.dataset.season = resolveSeason(c.season);
   document.body.classList.toggle('without-animation', !c.animations);
 }
@@ -46,8 +48,13 @@ subscribe((s) => {
 });
 scene.refresh(getState());
 
-if (!getConfig().entry) {
-  modals.openWelcome();
+function openEntry() {
+  if (!getConfig().entry) {
+    modals.openWelcome();
+  }
+}
+if (!showRotateScreen({ onDismiss: openEntry })) {
+  openEntry();
 }
 
 observeUser(async (user) => {

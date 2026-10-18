@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDefaultState, isSavedState, normalizeConfig, normalizeState } from './store.js';
+import { createDefaultState, detectLanguage, isSavedState, normalizeConfig, normalizeState } from './store.js';
 
 describe('normalizeState', () => {
   it('fills a missing save with the default state', () => {
@@ -50,11 +50,29 @@ describe('isSavedState', () => {
 
 describe('normalizeConfig', () => {
   it('uses the defaults when nothing was saved', () => {
-    expect(normalizeConfig(null)).toEqual({ language: 'en', season: 'auto', hour: 'auto', animations: true, entry: null });
+    expect(normalizeConfig(null)).toEqual({
+      language: detectLanguage(),
+      season: 'auto',
+      hour: 'auto',
+      animations: true,
+      pixelEffect: 'strong',
+      entry: null,
+    });
+  });
+
+  it('keeps the language the player chose instead of the browser one', () => {
+    expect(normalizeConfig({ language: 'pt' }).language).toBe('pt');
+    expect(normalizeConfig({ language: 'en' }).language).toBe('en');
   });
 
   it('migrates the legacy Portuguese keys and values', () => {
     const config = normalizeConfig({ idioma: 'pt', estacao: 'winter', hora: 'noite', animacoes: false, entrada: 'conta' });
-    expect(config).toEqual({ language: 'pt', season: 'winter', hour: 'night', animations: false, entry: 'account' });
+    expect(config).toEqual({ language: 'pt', season: 'winter', hour: 'night', animations: false, pixelEffect: 'strong', entry: 'account' });
+  });
+});
+
+describe('detectLanguage', () => {
+  it('falls back to english for anything that is not portuguese', () => {
+    expect(['en', 'pt']).toContain(detectLanguage());
   });
 });

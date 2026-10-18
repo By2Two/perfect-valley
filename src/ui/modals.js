@@ -5,6 +5,7 @@ import { escapeHtml } from './util.js';
 
 const SEASONS = ['auto', 'spring', 'summer', 'fall', 'winter'];
 const HOURS = ['auto', 'day', 'sunset', 'night'];
+const PIXEL_EFFECTS = ['strong', 'smooth', 'off'];
 const LANGUAGE_OPTIONS = [
   ['en', 'English'],
   ['pt', 'Português'],
@@ -124,6 +125,7 @@ export function createModals({ notice }) {
       ['true', t('settings.on')],
       ['false', t('settings.off')],
     ];
+    const pixelOptions = PIXEL_EFFECTS.map((level) => [level, t(`pixel.${level}`)]);
     return `<div class="frame window config" role="dialog" aria-modal="true" aria-labelledby="title-modal">
       <header class="panel-top">
         <div class="panel-titles"><h2 id="title-modal">${t('settings.title')}</h2></div>
@@ -134,6 +136,7 @@ export function createModals({ notice }) {
         <section><h3>${t('settings.season')}</h3>${selectorHtml('season', config.season, seasonOptions)}</section>
         <section><h3>${t('settings.hour')}</h3>${selectorHtml('hour', config.hour, hourOptions)}</section>
         <section><h3>${t('settings.animations')}</h3>${selectorHtml('animations', String(config.animations), animationOptions)}</section>
+        <section><h3>${t('settings.pixel')}</h3>${selectorHtml('pixel', config.pixelEffect, pixelOptions)}</section>
         ${firebase.isFirebaseEnabled ? `<section><h3>${t('settings.account')}</h3>${settingsAccountHtml()}</section>` : ''}
         <section><h3>${t('settings.data')}</h3>
           <div class="pair">
@@ -220,6 +223,7 @@ export function createModals({ notice }) {
     season: ({ value }) => setConfig({ season: value }),
     hour: ({ value }) => setConfig({ hour: value }),
     animations: ({ value }) => setConfig({ animations: value === 'true' }),
+    pixel: ({ value }) => setConfig({ pixelEffect: value }),
     guest: () => {
       setConfig({ entry: 'local' });
       close();

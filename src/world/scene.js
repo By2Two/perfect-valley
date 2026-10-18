@@ -4,7 +4,9 @@ import { buildFarm } from './farm.js';
 const ZOOM_MIN = 0.75;
 const ZOOM_MAX = 3.2;
 const PAN_MAX = 13;
-const PIXEL_SCALE = 3;
+const PIXEL_SCALES = { strong: 3.8, smooth: 2.8, off: 1 };
+const DEFAULT_PIXEL_EFFECT = 'strong';
+const MAX_PIXEL_RATIO = 2;
 const AZIMUTH = Math.PI / 4;
 const CAMERA_ELEVATION = 0.6;
 const CAMERA_DISTANCE = 60;
@@ -42,6 +44,7 @@ export function createScene(canvas, { onClick, onHover }) {
   let offset = 0;
   let offsetTarget = 0;
   let view = 15;
+  let pixelEffect = DEFAULT_PIXEL_EFFECT;
 
   function frame() {
     const w = window.innerWidth;
@@ -71,8 +74,11 @@ export function createScene(canvas, { onClick, onHover }) {
     }
     v.y = 0;
   }
+  // The pixel scale stays constant: zoom and screen size never change how chunky the farm looks.
   function resize() {
-    renderer.setSize(Math.ceil(window.innerWidth / PIXEL_SCALE), Math.ceil(window.innerHeight / PIXEL_SCALE), false);
+    const scale = PIXEL_SCALES[pixelEffect] ?? PIXEL_SCALES[DEFAULT_PIXEL_EFFECT];
+    renderer.setPixelRatio(scale === PIXEL_SCALES.off ? Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO) : 1);
+    renderer.setSize(Math.ceil(window.innerWidth / scale), Math.ceil(window.innerHeight / scale), false);
     frame();
   }
   window.addEventListener('resize', resize);
@@ -273,6 +279,10 @@ export function createScene(canvas, { onClick, onHover }) {
     },
     setAnimations: (a) => {
       animations = a && !prefersReducedMotion;
+    },
+    setPixelEffect: (level) => {
+      pixelEffect = PIXEL_SCALES[level] ? level : DEFAULT_PIXEL_EFFECT;
+      resize();
     },
     openSpace: (isPanelOpen) => {
       offsetTarget = isPanelOpen ? 1 : 0;

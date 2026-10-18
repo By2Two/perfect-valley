@@ -193,7 +193,7 @@ function collectionBody(collection, state) {
 
 function itemDetail(item, checked, referenceOnly) {
   if (!item) {
-    return `<div class="detail empty-detail"><p>${t('detail.choice')}</p></div>`;
+    return `<p class="detail-tip">${t('detail.choice')}</p>`;
   }
   const isDone = referenceOnly || checked[item.id];
   const details = (item.details || [])
@@ -207,7 +207,10 @@ function itemDetail(item, checked, referenceOnly) {
     <div class="detail${isDone ? ' done' : ''}">
       <div class="detail-icon"><img src="${iconUrl(item.icon)}" alt=""></div>
       <div class="detail-text">
-        <h3>${escapeHtml(translateTerm(item.name))}</h3>
+        <div class="detail-head">
+          <h3>${escapeHtml(translateTerm(item.name))}</h3>
+          <button class="close small" data-action="deselect" data-focus="deselect" aria-label="${t('detail.clear')}">✕</button>
+        </div>
         ${item.section ? `<p class="detail-section">${escapeHtml(translateTerm(item.section))}</p>` : ''}
         ${details ? `<dl>${details}</dl>` : ''}
         ${item.note ? `<details><summary>${t('detail.notes')}</summary><p class="note">${escapeHtml(translateTerm(item.note))}</p></details>` : ''}

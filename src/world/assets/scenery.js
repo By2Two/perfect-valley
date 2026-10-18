@@ -36,11 +36,17 @@ const OCCUPIED = [
   [-5, -2, 0.2, -1],
   [6, -2.4, 7.4, -0.4],
 ];
-const PINE_COLORS = { spring: 0x2f7a44, summer: 0x2a6e3c, fall: 0x2f6b3a, winter: 0x2a5e38 };
+// Seasons follow the Stardew sprites: pines turn olive in fall and frost over in winter,
+// leafy trees go crimson then bare, and bushes end the year icy blue.
+const PINE_COLORS = { spring: 0x3e8c4a, summer: 0x2f7a3e, fall: 0x92902c, winter: 0x7fb4cc };
+const SEASON_FADE_SECONDS = 2.6;
+const ease = (k) => k * k * (3 - 2 * k);
+const SEASON_REPAINT_SECONDS = 0.07;
+const BUSH_COLORS = { spring: 0x5fae3e, summer: 0x3f8f2f, fall: 0xb5812c, winter: 0x8fcada };
 const LEAF_SHADOW = 0xb4b4b4;
 const LEAF_MIDDLE = 0xd8d8d8;
 const LEAF_LIGHT = 0xffffff;
-const PATH_COLORS = { spring: 0xc4b8a4, summer: 0xc4b8a4, fall: 0xbfae94, winter: 0xe2ddd6 };
+const PATH_COLORS = { spring: 0xc4b8a4, summer: 0xc4b8a4, fall: 0xc2a684, winter: 0xe2ddd6 };
 
 function tileMesh(list, material, y = 0) {
   const n = list.length;
@@ -87,7 +93,7 @@ function tileMesh(list, material, y = 0) {
 }
 
 export function buildScenery(u, { field }) {
-  const { scene, builder, materialTexture, clickable, group, random, lanternMaterial } = u;
+  const { scene, builder, materialTexture, clickable, group, random, lanternMaterial, snowMaterial } = u;
   const free = (x, z, slack = 1) =>
     lakeDistance(x, z) > LAKE.r + slack &&
     !OCCUPIED.some(([x0, z0, x1, z1]) => x > x0 && x < x1 && z > z0 && z < z1) &&
@@ -267,6 +273,7 @@ export function buildScenery(u, { field }) {
   kc.box([0.6, 0.06, 0.09], 0x5b3a1e, { position: [-5.5, 1.38, FENCE_EDGE] });
 
   const leafMaterial = new THREE.MeshLambertMaterial({ map: grass({ base: 0xf4f4f4 }), vertexColors: true, color: 0x6ec24a });
+  const bushMaterial = new THREE.MeshLambertMaterial({ map: grass({ base: 0xf4f4f4 }), vertexColors: true, color: BUSH_COLORS.spring });
   const pineMaterial = new THREE.MeshLambertMaterial({ map: grass({ base: 0xf4f4f4 }), vertexColors: true, color: PINE_COLORS.spring });
   const mBark = materialTexture(verticalPlanks({ base: 0x7a4a26, width: 2 }));
   const kTrunk = builder();
@@ -298,15 +305,35 @@ export function buildScenery(u, { field }) {
     ].forEach(([fx, fy, fz], i) => {
       kFlower.box([0.2 * s, 0.2 * s, 0.2 * s], i % 3 ? 0xf7b6d2 : 0xfff4e0, { position: [fx * s, fy * s, fz * s] });
     });
-    kSnow.box([1.8 * s, 0.18 * s, 1.8 * s], 0xf6fafc, { position: [0, 1.9 * s, 0] });
-    kSnow.box([1.0 * s, 0.16 * s, 1.0 * s], 0xf6fafc, { position: [0, 2.2 * s, 0] });
-    kSnow.box([2.0 * s, 0.14 * s, 1.0 * s], 0xf6fafc, { position: [0, 1.35 * s, 0.75 * s] });
-    return { k, kFlower, kSnow, alt: 1.15 * s };
+    kSnow.box([1.8 * s, 0.18 * s, 1.8 * s], snowMaterial, { color: 0xf6fafc, position: [0, 1.9 * s, 0] });
+    kSnow.box([1.0 * s, 0.16 * s, 1.0 * s], snowMaterial, { color: 0xf6fafc, position: [0, 2.2 * s, 0] });
+    kSnow.box([2.0 * s, 0.14 * s, 1.0 * s], snowMaterial, { color: 0xf6fafc, position: [0, 1.35 * s, 0.75 * s] });
+    // Winter strips the canopy back to bare forking branches.
+    const kBare = builder();
+    kBare.piece(new THREE.BoxGeometry(0.22 * s, 1.1 * s, 0.22 * s), mBark, { position: [0, 0.3 * s, 0], outline: true });
+    [
+      [-0.5, 0.75, 0.15, 0.55, 0],
+      [0.52, 0.8, -0.1, -0.5, 0],
+      [0.1, 0.85, 0.55, 0, -0.5],
+      [-0.15, 0.7, -0.5, 0, 0.45],
+    ].forEach(([bx, by, bz, tiltZ, tiltX]) => {
+      kBare.piece(new THREE.BoxGeometry(0.15 * s, 1.05 * s, 0.15 * s), mBark, {
+        rot: new THREE.Euler(tiltX, 0, tiltZ),
+        position: [bx * s, by * s, bz * s],
+        outline: true,
+      });
+      kBare.piece(new THREE.BoxGeometry(0.1 * s, 0.6 * s, 0.1 * s), mBark, {
+        rot: new THREE.Euler(tiltX * 1.8, 0, tiltZ * 1.8),
+        position: [bx * 1.7 * s, (by + 0.75) * s, bz * 1.7 * s],
+      });
+    });
+    return { k, kFlower, kSnow, kBare, kCone: null, alt: 1.15 * s, kind: 'oak' };
   }
   function pine(x, z, s) {
     kTrunk.box([0.36 * s, 0.7 * s, 0.36 * s], mBark, { position: [x, 0, z], outline: true });
     const k = builder();
     const kSnow = builder();
+    const kCone = builder();
     [
       [2.1, 0],
       [1.7, 0.6],
@@ -321,12 +348,21 @@ export function buildScenery(u, { field }) {
         position: [0, (y + 0.31) * s, 0],
         outline: true,
       });
-      kSnow.piece(new THREE.BoxGeometry(w * 0.82 * s, 0.1 * s, w * 0.82 * s), 0xf6fafc, {
+      kSnow.piece(new THREE.BoxGeometry(w * 0.82 * s, 0.1 * s, w * 0.82 * s), snowMaterial, {
+        color: 0xf6fafc,
         rot: new THREE.Euler(0, i % 2 ? Math.PI / 4 : 0, 0),
         position: [0, (y + 0.64) * s, 0],
       });
+      // Red cones dot the olive fall pine.
+      if (i < 4) {
+        [0.6, -0.5].forEach((side, j) => {
+          kCone.box([0.14 * s, 0.14 * s, 0.14 * s], 0xc0442e, {
+            position: [w * 0.34 * side * s, (y + 0.42) * s, w * 0.3 * (j ? side : -side) * s],
+          });
+        });
+      }
     });
-    return { k, kFlower: null, kSnow, alt: 0.6 * s };
+    return { k, kFlower: null, kSnow, kBare: null, kCone, alt: 0.6 * s, kind: 'pine' };
   }
   [
     [-12.6, -12.5, 1.0, 'p'],
@@ -348,10 +384,23 @@ export function buildScenery(u, { field }) {
     const canopy = new THREE.Group();
     canopy.position.y = a.alt;
     g.add(canopy);
-    a.k.mount(canopy);
+    // Each layer gets its own group: hiding the group also hides its outline mesh,
+    // which mount() does not hand back.
+    const layer = (kBuilder, options) => {
+      const holder = new THREE.Group();
+      canopy.add(holder);
+      kBuilder?.mount(holder, options);
+      return holder;
+    };
+    const leaves = layer(a.k);
     const flowers = a.kFlower ? [...a.kFlower.mount(canopy, { shadow: false }).values()] : [];
     const snow = [...a.kSnow.mount(canopy, { shadow: false }).values()];
-    trees.push({ canopy, flowers, snow, phase: random() * 6 });
+    snow.forEach((n) => {
+      n.visible = a.kind === 'pine';
+    });
+    const bare = layer(a.kBare);
+    const cones = layer(a.kCone, { shadow: false });
+    trees.push({ canopy, leaves, flowers, snow, bare, cones, kind: a.kind, phase: random() * 6 });
   });
 
   const kd = builder();
@@ -368,15 +417,15 @@ export function buildScenery(u, { field }) {
     [12.4, 9.6],
     [7.9, 12.6],
   ].forEach(([x, z], i) => {
-    kd.box([0.95, 0.5, 0.8], leafMaterial, { position: [x, 0, z], color: LEAF_SHADOW, outline: true });
-    kd.box([0.7, 0.35, 0.95], leafMaterial, { position: [x, 0.1, z], color: LEAF_MIDDLE, outline: true });
-    kd.box([0.55, 0.25, 0.55], leafMaterial, { position: [x, 0.45, z], color: LEAF_LIGHT });
+    kd.box([0.95, 0.5, 0.8], bushMaterial, { position: [x, 0, z], color: LEAF_SHADOW, outline: true });
+    kd.box([0.7, 0.35, 0.95], bushMaterial, { position: [x, 0.1, z], color: LEAF_MIDDLE, outline: true });
+    kd.box([0.55, 0.25, 0.55], bushMaterial, { position: [x, 0.45, z], color: LEAF_LIGHT });
     [
       [0.3, 0.42, 0.3],
       [-0.25, 0.3, 0.38],
       [0.1, 0.62, -0.2],
     ].forEach(([dx, dy, dz]) => {
-      kBerries.box([0.1, 0.1, 0.1], i % 2 ? 0xd8343b : 0x5b6fd6, { position: [x + dx, dy, z + dz] });
+      kBerries.box([0.1, 0.1, 0.1], i % 2 ? 0xd8343b : 0xf07a9a, { position: [x + dx, dy, z + dz] });
     });
   });
   [
@@ -535,56 +584,146 @@ export function buildScenery(u, { field }) {
   kTuft.piece(new THREE.BoxGeometry(0.05, 0.24, 0.05), 0xffffff, { rot: new THREE.Euler(0, 0, 0.4), position: [0.06, 0.1, 0.02] });
   kTuft.piece(new THREE.BoxGeometry(0.05, 0.22, 0.05), 0xffffff, { rot: new THREE.Euler(0.4, 0, -0.3), position: [-0.05, 0.1, -0.04] });
   const tufts = new THREE.InstancedMesh(kTuft.join(), new THREE.MeshLambertMaterial({ vertexColors: true }), TUFT_COUNT);
-  for (let i = 0, n = 0; n < TUFT_COUNT && i < 800; i++) {
+  const tuftPoints = [];
+  for (let i = 0; tuftPoints.length < TUFT_COUNT && i < 800; i++) {
     const x = (random() - 0.5) * (SIZE - 1);
     const z = (random() - 0.5) * (SIZE - 1);
     if (!free(x, z, 0.4)) {
       continue;
     }
-    tufts.setMatrixAt(n++, m4.makeRotationY(i).setPosition(x, 0, z));
+    tufts.setMatrixAt(tuftPoints.length, m4.makeRotationY(i).setPosition(x, 0, z));
+    tuftPoints.push([x, z, i]);
   }
   scene.add(tufts);
 
+  // Seasons cross-fade instead of snapping: the grass drifts colour, snow creeps over
+  // the trees and the little flowers grow back out of the ground.
   let season = 'spring';
-  function setSeason(e, p) {
-    season = e;
-    ground.paint((t, c) => c.setHex(p.grass[t.v]));
-    sand.paint((t, c) => c.setHex(p.sand).offsetHSL(0, 0, t.v % 2 ? -0.03 : 0));
-    path.paint((t, c) => c.setHex(PATH_COLORS[e]).offsetHSL(0, 0, ((t.v ?? 1) - 1.5) * 0.03));
-    lipMaterial.color.setHex(p.grass[3]).offsetHSL(0, 0, -0.05);
-    leafMaterial.color.setHex(p.leaves[0]);
-    pineMaterial.color.setHex(PINE_COLORS[e]);
+  let fromSeason = 'spring';
+  let palette = null;
+  let fromPalette = null;
+  let blend = 1;
+  const mix = new THREE.Color();
+  const scratch = new THREE.Vector3();
+  const blendHex = ([a, b], k, out) => out.setHex(a).lerp(mix.setHex(b), k);
+  function seasonAmount(name, k) {
+    if (season === name) {
+      return k;
+    }
+    return fromSeason === name ? 1 - k : 0;
+  }
+  // How much of a 0..1 fade a flag is worth: it grows in or dies off across the halfway mark.
+  function flagAmount(k, before, after) {
+    if (k < 0.5) {
+      return before ? 1 - k * 2 : 0;
+    }
+    return after ? k * 2 - 1 : 0;
+  }
+
+  function growInstances(mesh, points, amount) {
+    mesh.visible = amount > 0.02;
+    if (!mesh.visible) {
+      return;
+    }
+    points.forEach(([x, z, spin], i) => {
+      m4.makeRotationY(spin ?? i).scale(scratch.set(1, amount, 1)).setPosition(x, 0, z);
+      mesh.setMatrixAt(i, m4);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+
+  function paintSeason(k) {
+    const from = fromPalette;
+    const to = palette;
+    ground.paint((t, c) => blendHex([from.grass[t.v], to.grass[t.v]], k, c));
+    sand.paint((t, c) => blendHex([from.sand, to.sand], k, c).offsetHSL(0, 0, t.v % 2 ? -0.03 : 0));
+    path.paint((t, c) => blendHex([PATH_COLORS[fromSeason], PATH_COLORS[season]], k, c).offsetHSL(0, 0, ((t.v ?? 1) - 1.5) * 0.03));
+    blendHex([from.grass[3], to.grass[3]], k, lipMaterial.color).offsetHSL(0, 0, -0.05);
+    blendHex([from.leaves[0], to.leaves[0]], k, leafMaterial.color);
+    blendHex([PINE_COLORS[fromSeason], PINE_COLORS[season]], k, pineMaterial.color);
+    blendHex([BUSH_COLORS[fromSeason], BUSH_COLORS[season]], k, bushMaterial.color);
+    blendHex([from.water[0], to.water[0]], k, waterMaterial.color);
+
+    const winter = seasonAmount('winter', k);
+    const autumn = seasonAmount('fall', k);
+    const bloom = flagAmount(k, fromPalette.flower, palette.flower);
+    const past = k < 0.5;
     trees.forEach((a) => {
+      const bareness = a.kind === 'oak' ? winter : 0;
+      a.leaves.visible = bareness < 0.98;
+      a.leaves.scale.setScalar(Math.max(0.02, 1 - bareness));
+      a.bare.visible = bareness > 0.02;
+      a.bare.scale.setScalar(Math.max(0.02, bareness));
+      a.cones.visible = autumn > 0.02;
+      a.cones.scale.setScalar(Math.max(0.02, autumn));
       a.flowers.forEach((f) => {
-        f.visible = p.flower;
-      });
-      a.snow.forEach((n) => {
-        n.visible = e === 'winter';
+        f.visible = bloom > 0.02;
+        f.scale.setScalar(Math.max(0.02, bloom));
       });
     });
     berries.forEach((f) => {
-      f.visible = e === 'summer' || e === 'fall';
+      f.visible = (past ? fromSeason : season) === 'summer';
     });
-    flowers.visible = p.flowers.length > 0;
-    flowerPoints.forEach((_, i) => flowers.setColorAt(i, color.setHex(p.flowers[i % Math.max(1, p.flowers.length)] ?? 0xffffff)));
+
+    const flowerPalette = (palette.flowers.length ? palette : fromPalette).flowers;
+    flowerPoints.forEach((_, i) => flowers.setColorAt(i, color.setHex(flowerPalette[i % Math.max(1, flowerPalette.length)] ?? 0xffffff)));
     if (flowers.instanceColor) {
       flowers.instanceColor.needsUpdate = true;
     }
+    const flowerHeight = flagAmount(k, fromPalette.flowers.length > 0, palette.flowers.length > 0);
+    growInstances(flowers, flowerPoints, flowerHeight);
+
     for (let i = 0; i < TUFT_COUNT; i++) {
-      tufts.setColorAt(i, color.setHex(p.grass[3]).offsetHSL(0, 0, -0.1 + (i % 3) * 0.04));
+      tufts.setColorAt(i, blendHex([from.grass[3], to.grass[3]], k, color).offsetHSL(0, 0, -0.1 + (i % 3) * 0.04));
     }
     if (tufts.instanceColor) {
       tufts.instanceColor.needsUpdate = true;
     }
-    tufts.visible = e !== 'winter';
+    growInstances(tufts, tuftPoints, 1 - winter);
     lilyPads.forEach((v) => {
-      v.visible = e !== 'winter';
+      v.visible = winter < 0.5;
     });
-    waterMaterial.color.setHex(p.water[0]);
-    if (e === 'winter') {
+    if (winter > 0.5) {
       fish.visible = false;
     }
   }
+
+  function setSeason(e, p) {
+    if (!palette) {
+      season = e;
+      fromSeason = e;
+      palette = p;
+      fromPalette = p;
+      blend = 1;
+      paintSeason(1);
+      return;
+    }
+    if (e === season) {
+      return;
+    }
+    fromSeason = season;
+    fromPalette = palette;
+    season = e;
+    palette = p;
+    blend = 0;
+    paintSeason(0);
+  }
+
+  // Blending repaints every tile, so it runs on its own slower clock.
+  let sinceRepaint = 0;
+  function advanceSeason(dt) {
+    if (blend >= 1) {
+      return;
+    }
+    blend = Math.min(1, blend + dt / SEASON_FADE_SECONDS);
+    sinceRepaint += dt;
+    if (blend >= 1 || sinceRepaint >= SEASON_REPAINT_SECONDS) {
+      sinceRepaint = 0;
+      paintSeason(blend < 1 ? ease(blend) : 1);
+    }
+  }
+
+  const seasonProgress = () => ({ season, fromSeason, blend: ease(blend) });
   function setLight(night) {
     postLights.forEach((l) => {
       l.intensity = night ? 18 : 0;
@@ -593,6 +732,7 @@ export function buildScenery(u, { field }) {
 
   let fishJump = 3;
   function animate(t, dt) {
+    advanceSeason(dt);
     trees.forEach((a) => {
       a.canopy.rotation.z = Math.sin(t * 0.9 + a.phase) * 0.025;
       a.canopy.rotation.x = Math.cos(t * 0.7 + a.phase) * 0.02;
@@ -618,5 +758,5 @@ export function buildScenery(u, { field }) {
     }
   }
 
-  return { setSeason, setLight, animate };
+  return { setSeason, setLight, animate, seasonProgress, settleSeason: () => advanceSeason(SEASON_FADE_SECONDS) };
 }

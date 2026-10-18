@@ -32,7 +32,7 @@ const PROFILE = [
 ];
 
 export function buildHouse(u) {
-  const { builder, materialTexture, clickable, group, windowMaterial, lanternMaterial } = u;
+  const { builder, materialTexture, clickable, group, windowMaterial, lanternMaterial, snowMaterial } = u;
   const mWall = materialTexture(verticalPlanks({ base: COLOR.wall }));
   const mShingle = materialTexture(shingles({ base: COLOR.shingle }));
   const mStone = materialTexture(bricks({ base: COLOR.stone }));
@@ -106,10 +106,10 @@ export function buildHouse(u) {
     const ridge = [0, Y0 + 1.95];
     k.slab([eaves, knee], mShingle, { thickness, length: Lt, extension: [0.32, 0.1], outline: true });
     k.slab([knee, ridge], mShingle, { thickness, length: Lt, extension: [0.04, 0.06], outline: true });
-    kSnow.slab([knee, ridge], COLOR.snow, { thickness: 0.12, length: Lt + 0.04, extension: [0.08, 0.06], over: thickness });
+    kSnow.slab([knee, ridge], snowMaterial, { color: COLOR.snow, thickness: 0.12, length: Lt + 0.04, extension: [0.08, 0.06], over: thickness });
   });
   k.box([Lt + 0.04, 0.16, 0.34], COLOR.ridge, { position: [0, Y0 + 2.0, 0], outline: true });
-  kSnow.box([Lt + 0.08, 0.12, 0.42], COLOR.snow, { position: [0, Y0 + 2.14, 0] });
+  kSnow.box([Lt + 0.08, 0.12, 0.42], snowMaterial, { color: COLOR.snow, position: [0, Y0 + 2.14, 0] });
 
   [-1.5, 1.5].forEach((dx) => {
     k.box([1.1, 0.95, 1.05], mWall, { position: [dx, Y0 + 0.4, 1.45], outline: true });
@@ -117,13 +117,13 @@ export function buildHouse(u) {
     const a = [2.12, Y0 + 1.3];
     const b = [0.9, Y0 + 1.55];
     k.slab([a, b], mShingle, { thickness: 0.12, length: 1.35, center: dx, extension: [0.1, 0], outline: true });
-    kSnow.slab([a, b], COLOR.snow, { thickness: 0.1, length: 1.4, center: dx, extension: [0.1, 0], over: 0.12 });
+    kSnow.slab([a, b], snowMaterial, { color: COLOR.snow, thickness: 0.1, length: 1.4, center: dx, extension: [0.1, 0], over: 0.12 });
   });
 
   const CH = [2.2, -0.75];
   k.box([0.8, 3.25, 0.8], mChimney, { position: [CH[0], 2.6, CH[1]], outline: true });
   k.box([0.98, 0.16, 0.98], 0x5e5a55, { position: [CH[0], 5.85, CH[1]], outline: true });
-  kSnow.box([0.98, 0.08, 0.98], COLOR.snow, { position: [CH[0], 6.01, CH[1]] });
+  kSnow.box([0.98, 0.08, 0.98], snowMaterial, { color: COLOR.snow, position: [CH[0], 6.01, CH[1]] });
 
   const front = onWall(k, 'z', P / 2);
   front([0.1, 1.85, 0.1], COLOR.frame, { along: -0.5, y: 0.52, offset: 0.05 });
@@ -148,7 +148,7 @@ export function buildHouse(u) {
       [2.95, 2.3],
       [2.12, 2.52],
     ],
-    COLOR.snow,
+    snowMaterial,
     { thickness: 0.08, length: 1.5, over: 0.1 },
   );
   [-0.65, 0.65].forEach((along) => front([0.07, 0.07, 0.8], COLOR.frame, { along, y: 2.24, offset: 0.4 }));
@@ -213,7 +213,7 @@ export function buildHouse(u) {
 
   const house = group(-5.5, -6.5);
   k.mount(house);
-  const snow = [...kSnow.mount(house, { shadow: false }).values()];
+  kSnow.mount(house, { shadow: false });
   const flowers = [...kFlowers.mount(house).values()];
   clickable(house, 'friends');
   const chimney = new THREE.Vector3(-5.5 + CH[0], 6.05, -6.5 + CH[1]);
@@ -255,9 +255,6 @@ export function buildHouse(u) {
   clickable(bench, 'crafting');
 
   function setSeason(season) {
-    snow.forEach((m) => {
-      m.visible = season === 'winter';
-    });
     flowers.forEach((m) => {
       m.visible = season !== 'winter';
     });

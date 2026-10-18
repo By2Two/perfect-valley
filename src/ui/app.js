@@ -81,6 +81,7 @@ export function createApp({ scene, openConfig }) {
     panelHistory = stack && openPanelId ? [...panelHistory, openPanelId] : [];
     openPanelId = id;
     panel.hidden = false;
+    document.body.classList.add('panel-open');
     render({ fromTop: true });
     markSlots();
     scene.openSpace(true);
@@ -90,6 +91,7 @@ export function createApp({ scene, openConfig }) {
     openPanelId = null;
     panelHistory = [];
     panel.hidden = true;
+    document.body.classList.remove('panel-open');
     markSlots();
     scene.openSpace(false);
   }
@@ -134,7 +136,9 @@ export function createApp({ scene, openConfig }) {
     const { focus: focusId } = document.activeElement?.dataset ?? {};
     const cursor = document.activeElement?.selectionStart ?? undefined;
     const scroll = fromTop ? 0 : panel.querySelector('.body')?.scrollTop || 0;
-    panel.className = `frame panel${isWidePanel() ? ' wide' : ''}`;
+    const collection = currentCollection();
+    const hasDetail = Boolean(collection && filterOf(collection).selected);
+    panel.className = `frame panel${isWidePanel() ? ' wide' : ''}${hasDetail ? ' detail-open' : ''}`;
     panel.innerHTML = panelHtml(openPanelId, getState());
     const body = panel.querySelector('.body');
     if (body) {
@@ -191,6 +195,10 @@ export function createApp({ scene, openConfig }) {
       render();
     },
     item: ({ id, collection }) => selectItem(collection, id),
+    deselect: ({ collection }) => {
+      filterOf(collection).selected = null;
+      render();
+    },
     toggle: ({ id, collection }) => toggleItem(collection, id),
     heart: ({ id, count }) => setPips('friends', id, count),
     skill: ({ id, count }) => setPips('skills', id, count),

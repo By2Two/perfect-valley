@@ -21,8 +21,15 @@ const LEGACY_SAVE_KEYS = {
 const LEGACY_CONFIG_KEYS = { idioma: 'language', estacao: 'season', hora: 'hour', animacoes: 'animations', entrada: 'entry' };
 const LEGACY_HOUR_VALUES = { dia: 'day', tarde: 'sunset', noite: 'night' };
 const LEGACY_ENTRY_VALUES = { conta: 'account' };
+const PORTUGUESE_LANGUAGE_PATTERN = /^pt\b/i;
+const FALLBACK_LANGUAGE = 'en';
 
-const DEFAULT_CONFIG = { language: 'en', season: 'auto', hour: 'auto', animations: true, entry: null };
+const DEFAULT_CONFIG = { language: null, season: 'auto', hour: 'auto', animations: true, pixelEffect: 'strong', entry: null };
+
+export function detectLanguage() {
+  const preferred = typeof navigator === 'undefined' ? '' : navigator.language || navigator.languages?.[0] || '';
+  return PORTUGUESE_LANGUAGE_PATTERN.test(preferred) ? 'pt' : FALLBACK_LANGUAGE;
+}
 
 const asPlainObject = (value) => (value && typeof value === 'object' && !Array.isArray(value) ? value : {});
 
@@ -72,7 +79,9 @@ export function normalizeConfig(raw) {
   return {
     ...DEFAULT_CONFIG,
     ...stored,
+    language: stored.language ?? detectLanguage(),
     hour: LEGACY_HOUR_VALUES[stored.hour] ?? stored.hour ?? DEFAULT_CONFIG.hour,
+    pixelEffect: stored.pixelEffect ?? DEFAULT_CONFIG.pixelEffect,
     entry: LEGACY_ENTRY_VALUES[stored.entry] ?? stored.entry ?? DEFAULT_CONFIG.entry,
   };
 }

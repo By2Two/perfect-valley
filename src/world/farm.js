@@ -39,12 +39,12 @@ const PALETTES = {
     butterflies: true,
   },
   fall: {
-    grass: [0xa59b44, 0x968e3c, 0xb0a54c, 0x8b8436],
+    grass: [0x9a8232, 0x8a7329, 0xa8913e, 0x7c661f],
     path: 0xc29a62,
     soil: [0x7a4a26, 0x6e4222],
     sand: 0xd2bb82,
-    leaves: [0xd9822b, 0xe0a43a, 0xc0442e],
-    flowers: [0xe8833a, 0x9b4fc4, 0xf2c230],
+    leaves: [0xd9752a, 0xe8953c, 0xc14a24],
+    flowers: [0xe8833a, 0xc4512a, 0xf2c230],
     plants: [0xe8833a, 0x9b4fc4, 0xf2c230, 0xc0442e],
     water: [0x3c7fbf, 0x4b8fcc],
     particle: { color: 0xe8833a, count: 60, speed: 1.1 },
@@ -57,7 +57,7 @@ const PALETTES = {
     path: 0xd6cfc4,
     soil: [0xd2c8bd, 0xc9beb2],
     sand: 0xe2e8ec,
-    leaves: [0x2f6b3a, 0x3a7a45],
+    leaves: [0x9fd8e8, 0xb8e4f0],
     flowers: [],
     plants: [],
     water: [0xbfe3f2, 0xd3edf7],
@@ -102,6 +102,7 @@ export function buildFarm(scene) {
     return { pts, arr, geo, material, base: Array.from({ length: count }, () => [random(), random(), random(), random() * 6]) };
   }
   const fallingParticles = pointCloud(160, 0xffffff);
+  const tempColor = new THREE.Color();
   const fireflies = pointCloud(40, 0xfff27a);
   const smoke = Array.from({ length: 8 }, (_, i) => {
     const m = box([0.4, 0.4, 0.4], new THREE.MeshLambertMaterial({ color: 0xd8d8d8, transparent: true, opacity: 0.7 }));
@@ -138,11 +139,26 @@ export function buildFarm(scene) {
     scenery.setSeason(season, palette);
     house.setSeason(season);
     barn.setSeason(season);
-    mine.setSeason(season);
     farmland.setSeason(season, palette);
-    fallingParticles.pts.visible = Boolean(palette.particle);
-    if (palette.particle) {
-      fallingParticles.material.color.setHex(palette.particle.color);
+  }
+
+  // Snow, petals and rooftop snow all fade with the season instead of popping.
+  const particleTint = new THREE.Color();
+  let activeParticle = null;
+  function fadeParticles() {
+    const { season: to, fromSeason: from, blend } = scenery.seasonProgress();
+    const winterBefore = from === 'winter' ? 1 - blend : 0;
+    u.setSnowAmount(to === 'winter' ? blend : winterBefore);
+    const next = PALETTES[to].particle;
+    const previous = PALETTES[from].particle;
+    const opacity = (previous ? 1 - blend : 0) + (next ? blend : 0);
+    fallingParticles.pts.visible = opacity > 0.02;
+    fallingParticles.material.opacity = opacity;
+    const source = next ?? previous;
+    activeParticle = opacity > 0.02 ? source : null;
+    if (source) {
+      particleTint.setHex((previous ?? next).color).lerp(tempColor.setHex((next ?? previous).color), blend);
+      fallingParticles.material.color.copy(particleTint);
     }
   }
 
@@ -167,12 +183,15 @@ export function buildFarm(scene) {
 
   function animate(t, dt, { move, night }) {
     farmland.animate(t, dt, move);
+    barn.animate(t, dt, move);
     if (!move) {
+      scenery.settleSeason();
+      fadeParticles();
       return;
     }
 
     scenery.animate(t, dt);
-    barn.animate(t, dt);
+    fadeParticles();
     obelisks.animate(t);
     clock.animate(t, dt);
 
@@ -184,8 +203,8 @@ export function buildFarm(scene) {
       f.material.opacity = 0.65 * (1 - k);
     });
 
-    if (fallingParticles.pts.visible) {
-      const { speed, count } = palette.particle;
+    if (fallingParticles.pts.visible && activeParticle) {
+      const { speed, count } = activeParticle;
       fallingParticles.base.forEach((b, i) => {
         if (i >= count) {
           fallingParticles.arr[i * 3 + 1] = -50;

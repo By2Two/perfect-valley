@@ -25,7 +25,7 @@ export function geoRock(radius, seed = 0, { detail = 0, flatten = 0.85, kind = '
 }
 
 export function buildMine(u) {
-  const { builder, materialTexture, clickable, group } = u;
+  const { builder, materialTexture, clickable, group, snowMaterial } = u;
   const mRock = materialTexture(rock({ base: 0xc8c8c8 }));
   const mWood = materialTexture(deckPlanks({ base: 0x9a6a3a }));
   const lanternMaterial = new THREE.MeshLambertMaterial({ color: 0xfff2c0, emissive: 0x6a4010 });
@@ -62,7 +62,7 @@ export function buildMine(u) {
     [-0.9, 2.95, -1.3, 0.65],
     [0, 2.75, -0.2, 0.9],
   ].forEach(([x, y, z, r], i) => {
-    kSnow.piece(geoRock(r, 40 + i, { flatten: 0.3 }), 0xf6fafc, { position: [x, y, z] });
+    kSnow.piece(geoRock(r, 40 + i, { flatten: 0.3 }), snowMaterial, { color: 0xf6fafc, position: [x, y, z] });
   });
 
   const dir = new THREE.Vector3();
@@ -144,17 +144,12 @@ export function buildMine(u) {
 
   const mine = group(10.8, -11.2);
   k.mount(mine);
-  const snow = [...kSnow.mount(mine, { shadow: false }).values()];
+  kSnow.mount(mine, { shadow: false });
   clickable(mine, 'monsters');
 
-  function setSeason(season) {
-    snow.forEach((m) => {
-      m.visible = season === 'winter';
-    });
-  }
   function setLight(night) {
     lanternMaterial.emissive.setHex(night ? 0xffc870 : 0x6a4010);
   }
 
-  return { group: mine, setSeason, setLight };
+  return { group: mine, setLight };
 }
