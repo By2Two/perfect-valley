@@ -1,6 +1,8 @@
 import { t, getLanguage } from '../i18n.js';
+import { escapeHtml } from './util.js';
 import {
   getState,
+  update,
   replaceState,
   createDefaultState,
   normalizeState,
@@ -11,6 +13,7 @@ import {
   setFarmLayout,
 } from '../store.js';
 import { parseFarmSave } from '../farmSave.js';
+import { parsePlayerSave, mergeProgress, listPlayers } from '../playerSave.js';
 
 const SEASONS = ['auto', 'spring', 'summer', 'fall', 'winter'];
 const HOURS = ['auto', 'day', 'sunset', 'night'];
@@ -19,7 +22,6 @@ const LANGUAGE_OPTIONS = [
   ['en', 'English'],
   ['pt', 'Português'],
 ];
-const FARM_UPLOAD_ENABLED = false;
 const BACKUP_FILE_PREFIX = 'perfect-valley';
 const BACKUP_JSON_INDENT = 2;
 
@@ -28,6 +30,7 @@ export function createModals({ notice }) {
   const backupInput = document.getElementById('file');
   const farmInput = document.getElementById('farm-file');
   let isOpen = false;
+  let pendingImport = null;
 
   function open() {
     isOpen = true;
@@ -83,7 +86,7 @@ export function createModals({ notice }) {
         <section><h3>${t('settings.hour')}</h3>${selectorHtml('hour', config.hour, hourOptions)}</section>
         <section><h3>${t('settings.animations')}</h3>${selectorHtml('animations', String(config.animations), animationOptions)}</section>
         <section><h3>${t('settings.pixel')}</h3>${selectorHtml('pixel', config.pixelEffect, pixelOptions)}</section>
-        ${FARM_UPLOAD_ENABLED ? farmSectionHtml() : ''}
+        ${farmSectionHtml()}
         <section><h3>${t('settings.data')}</h3>
           <div class="actions">
             <button class="button secondary" data-action="download">${t('settings.download')}</button>
@@ -95,9 +98,24 @@ export function createModals({ notice }) {
     </div>`;
   }
 
+  function pickerHtml() {
+    const buttons = pendingImport.players
+      .map(
+        (player) => `<button class="button secondary" data-action="pickPlayer" data-index="${player.index}">${escapeHtml(player.name)}${player.isHost ? ` · ${t('import.host')}` : ''}</button>`,
+      )
+      .join('');
+    return `<div class="frame window config" role="dialog" aria-modal="true" aria-labelledby="title-modal">
+      <header class="panel-top">
+        <div class="panel-titles"><h2 id="title-modal">${t('import.pickTitle')}</h2></div>
+        <button class="close" data-action="cancelPick" aria-label="${t('btn.close')}">✕</button>
+      </header>
+      <div class="body"><p class="text-hint">${t('import.pickNote')}</p><div class="actions">${buttons}</div></div>
+    </div>`;
+  }
+
   function render() {
     if (isOpen) {
-      modal.innerHTML = settingsHtml();
+      modal.innerHTML = pendingImport ? pickerHtml() : settingsHtml();
     }
   }
 
@@ -127,6 +145,15 @@ export function createModals({ notice }) {
     download: downloadBackup,
     restore: () => backupInput.click(),
     importFarm: () => farmInput.click(),
+    pickPlayer: ({ index }) => {
+      const { text, layout } = pendingImport;
+      pendingImport = null;
+      finishImport(parsePlayerSave(text, layout, Number(index)));
+    },
+    cancelPick: () => {
+      pendingImport = null;
+      render();
+    },
     removeFarm: () => {
       setFarmLayout(null);
       notice(t('msg.farmRemoved'));
@@ -176,20 +203,30 @@ export function createModals({ notice }) {
     if (!file) {
       return;
     }
+    let text;
     let layout;
+    let players;
     try {
-      layout = parseFarmSave(await file.text());
+      text = await file.text();
+      layout = parseFarmSave(text);
+      players = listPlayers(text);
     } catch {
       notice(t('msg.farmInvalid'));
       return;
     }
-    if (!setFarmLayout(layout)) {
-      notice(t('msg.farmTooLarge'));
+    if (players.length > 1) {
+      pendingImport = { text, layout, players };
+      open();
       return;
     }
+    finishImport(parsePlayerSave(text, layout));
+  });
+
+  function finishImport(progress) {
+    update((state) => mergeProgress(state, progress));
     notice(t('msg.farmImported'));
     render();
-  });
+  }
 
   return {
     openConfig: open,

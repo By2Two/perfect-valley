@@ -330,8 +330,18 @@ function skillsBody(state) {
         <span class="pips">${pipsHtml({ action: 'skill', id: skill, value: level, required: MAX_SKILL_LEVEL, label, isHeart: false })}</span>
       </li>`;
   }).join('');
+  const masteryRows = SKILLS.map((skill) => {
+    const isDone = state.masteries[skill];
+    return `<li><label class="line${isDone ? ' done' : ''}">
+        <input type="checkbox" class="box" data-action="mark" data-key="masteries" data-id="${skill}" data-focus="mastery-${skill}" ${isDone ? 'checked' : ''}>
+        <span class="line-text"><strong>${t('level.mastery')}: ${t(`skill.${skill}`)}</strong></span>
+      </label></li>`;
+  }).join('');
+  const masteryCount = SKILLS.filter((skill) => state.masteries[skill]).length;
   return `<p class="highlight">${t('level.title', { n: `<strong>${farmerLevel(state)}</strong>` })}</p>
-    <ul class="list">${rows}</ul>`;
+    <ul class="list">${rows}</ul>
+    <p class="highlight">${t('level.masteries', { n: `<strong>${masteryCount}</strong>` })}</p>
+    <ul class="list">${masteryRows}</ul>`;
 }
 
 function groupBySection(walnuts) {

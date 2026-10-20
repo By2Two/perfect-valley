@@ -36,6 +36,11 @@ const asPlainObject = (value) => (value && typeof value === 'object' && !Array.i
 const renameLegacyKeys = (raw, legacyKeys) =>
   Object.fromEntries(Object.entries(asPlainObject(raw)).map(([key, value]) => [legacyKeys[key] ?? key, value]));
 
+function renameKey(object, from, to) {
+  const { [from]: value, ...rest } = object;
+  return value === undefined ? { ...object } : { ...rest, [to]: rest[to] ?? value };
+}
+
 export function createDefaultState() {
   return {
     version: SAVE_VERSION,
@@ -43,6 +48,7 @@ export function createDefaultState() {
     friends: {},
     monsters: {},
     skills: Object.fromEntries(SKILLS.map((skill) => [skill, 0])),
+    masteries: {},
     obelisks: {},
     stardrops: {},
     walnuts: {},
@@ -58,9 +64,10 @@ export function normalizeState(raw) {
   return {
     ...defaults,
     items: Object.fromEntries(Object.keys(defaults.items).map((collection) => [collection, { ...asPlainObject(items[collection]) }])),
-    friends: { ...asPlainObject(source.friends) },
+    friends: renameKey(asPlainObject(source.friends), 'Elliot', 'Elliott'),
     monsters: { ...asPlainObject(source.monsters) },
     skills: { ...defaults.skills, ...asPlainObject(source.skills) },
+    masteries: { ...asPlainObject(source.masteries) },
     obelisks: { ...asPlainObject(source.obelisks) },
     stardrops: { ...asPlainObject(source.stardrops) },
     walnuts: { ...asPlainObject(source.walnuts) },
